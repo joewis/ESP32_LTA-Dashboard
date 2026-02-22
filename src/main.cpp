@@ -25,7 +25,6 @@ RTC_DATA_ATTR int bootCount = 0;
 RTC_DATA_ATTR int REFRESH_INTERVAL = 2;
 RTC_DATA_ATTR bool fetched_github = false;
 
-//const char* ssid =  "Linksys13626";
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;    
 
