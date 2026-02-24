@@ -70,107 +70,117 @@ void displayJuliaSet() {
     } while (display.nextPage());
 }
 
+struct MandelSpot {
+    float x;
+    float y;
+    float z;
+    const char* name;
+};
+
+// 16 High-detail spots across the Mandelbrot Set
+const MandelSpot midgetLibrary[16] = {
+    {-0.5f, 0.0f, 1.2f, "The Big Picture"},
+    {-0.7453f, 0.1127f, 650.0f, "Seahorse Valley"},
+    {-0.1607f, 1.0375f, 1200.0f, "Triple Spiral"},
+    {0.2817f, 0.5318f, 500.0f, "Elephant Valley"},
+    {-1.2506f, 0.0201f, 1500.0f, "Mini Mandelbrot"},
+    {-0.748f, 0.1f, 2000.0f, "The Seahorse Eye"},
+    {-1.775f, 0.0f, 300.0f, "Lightning Bolt"},
+    {-0.8115f, 0.2014f, 1800.0f, "Deep Spiral"},
+    {-0.1011f, 0.9563f, 1000.0f, "Medusa Tentacles"},
+    {-1.476f, 0.0f, 4500.0f, "The Satellite"},
+    {-0.374f, 0.659f, 1200.0f, "Starfish Branch"},
+    {-1.2505f, 0.0471f, 800.0f, "Scepter Valley"},
+    {-0.743f, 0.131f, 3500.0f, "Deep Forest"},
+    {0.273f, 0.007f, 400.0f, "The Cusp"},
+    {-0.1607f, 1.0375f, 2500.0f, "Quad-Spiral Zoom"},
+    {-1.94f, 0.0f, 1200.0f, "Antenna Tip"}
+};
+
 void displayMandelbrot() {
-    uint8_t ditherTable[33];
-    for (int i = 0; i <= 32; i++) {
-        ditherTable[i] = (uint8_t)((i * i * 255) / (1024)); // Scaled for 32 iterations
-    }
+  const int maxIterations = 256; 
+  int w = display.width();
+  int h = display.height();
+  float aspectRatio = (float)w / (float)h;
 
-    int w = display.width();
-    int h = display.height();
+  // 1. Coordinates (Picking a guaranteed high-detail spot)
+  //float centerX = -0.7453f; 
+  //float centerY = 0.1127f;
+  //float zoomFactor = 650.0f;
 
-    // Randomize position and zoom for different fractal views
-    // Instead of completely random values, we'll use ranges that ensure good coverage
-    float aspectRatio = (float)w / (float)h;
-    
-    // Choose from predefined interesting regions of the Mandelbrot set
-    int regionChoice = random(0, 5);
-    float centerX, centerY, zoomFactor;
-    
-    switch(regionChoice) {
-        case 0: // Full view of the main set
-            centerX = -0.5f;
-            centerY = 0.0f;
-            zoomFactor = 2.5f; // This will make the main set fill the screen appropriately
-            break;
-        case 1: // Seahorse valley
-            centerX = -0.75f;
-            centerY = 0.1f;
-            zoomFactor = 100.0f;
-            break;
-        case 2: // Lightning
-            centerX = -1.775f;
-            centerY = 0.0f;
-            zoomFactor = 200.0f;
-            break;
-        case 3: // Mini-Mandelbrot
-            centerX = -1.25066f;
-            centerY = 0.02012f;
-            zoomFactor = 500.0f;
-            break;
-        case 4: // Spiral area
-            centerX = -0.16f;
-            centerY = 1.04f;
-            zoomFactor = 150.0f;
-            break;
-        default:
-            centerX = -0.5f;
-            centerY = 0.0f;
-            zoomFactor = 2.5f;
-            break;
-    }
-    
-    // Apply some randomization around the chosen region
-    float randOffsetX = (float)random(-50, 50) / 100.0f / zoomFactor;
-    float randOffsetY = (float)random(-50, 50) / 100.0f / zoomFactor;
-    float randZoomAdjust = (float)random(80, 120) / 100.0f; // 0.8 to 1.2 multiplier
-    
-    centerX += randOffsetX;
-    centerY += randOffsetY;
-    zoomFactor *= randZoomAdjust;
+  int choice = random(0, 16);
+  MandelSpot spot = midgetLibrary[choice];
 
-    display.setFullWindow();
-    display.firstPage();
-    do {
-        display.fillScreen(GxEPD_WHITE);
+  float centerX = spot.x;
+  float centerY = spot.y;
+  float zoomFactor = spot.z;
 
-        for (int y = 0; y < h; y++) {
-            float cIm = centerY + (y - h / 2.0f) / (zoomFactor * h / 4.0f);
-            for (int x = 0; x < w; x++) {
-                float cRe = centerX + (x - w / 2.0f) / (zoomFactor * w / 4.0f * aspectRatio);
-                
-                float zRe = 0.0f;
-                float zIm = 0.0f;
-                int i;
+  centerX += (float)random(-100, 100) / (zoomFactor * 5000.0f);
+  centerY += (float)random(-100, 100) / (zoomFactor * 5000.0f);
 
-                for (i = 0; i < 32; i++) {
-                    float r2 = zRe * zRe;
-                    float i2 = zIm * zIm;
-                    if (r2 + i2 > 4.0f) break;
-                    zIm = 2.0f * zRe * zIm + cIm;
-                    zRe = r2 - i2 + cRe;
-                }
+  Serial.printf("Rendering %s at Zoom %.1f\n", spot.name, zoomFactor);
 
-                uint8_t noise = pgm_read_byte(&blueNoise64[(y % 64) * 64 + (x % 64)]);
+  display.setFullWindow();
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
 
-                if (i == 32) {
-                    // Inside the Mandelbrot set - use red with dithering for internal detail
-                    float mag = sqrt(zRe * zRe + zIm * zIm);
-                    uint8_t innerThreshold = (uint8_t)(mag * 120);
-                    
-                    if (noise > innerThreshold) {
-                        display.drawPixel(x, y, GxEPD_RED);
-                    } else {
-                        display.drawPixel(x, y, GxEPD_BLACK);
-                    }
-                } else if (i > 3) {
-                    // Outside the set - use dithering for grayscale effect
-                    if (noise < ditherTable[i]) {
-                        display.drawPixel(x, y, GxEPD_BLACK);
-                    }
-                }
-            }
-            if (y % 20 == 0) yield();
+    for (int y = 0; y < h; y++) {
+      float cIm = centerY + (y - h / 2.0f) * (4.0f / (zoomFactor * h));
+      for (int x = 0; x < w; x++) {
+        float cRe = centerX + (x - w / 2.0f) * (4.0f / (zoomFactor * w)) * aspectRatio;
+        float zRe = 0.0f, zIm = 0.0f;
+        int i;
+
+        for (i = 0; i < maxIterations; i++) {
+            float r2 = zRe * zRe;
+            float i2 = zIm * zIm;
+            if (r2 + i2 > 4.0f) break;
+            zIm = 2.0f * zRe * zIm + cIm;
+            zRe = r2 - i2 + cRe;
         }
-    } while (display.nextPage());
+
+        uint8_t noise = pgm_read_byte(&blueNoise64[(y % 64) * 64 + (x % 64)]);
+
+        // --- LAYERED COLORING LOGIC ---
+if (i == maxIterations) {
+            // THE CORE: Create a "Glow" from the boundary inward
+            float mag = sqrt(zRe * zRe + zIm * zIm);
+            
+            // Normalize mag (approx 0.0 to 2.0) to a 0.0-1.0 range
+            float normalizedMag = mag / 2.0f;
+            
+            // --- THE GLOW CURVE ---
+            // pow(x, 3.0) makes the red density drop off sharply as you move 
+            // away from the edge. Use 2.0 for a softer, deeper glow.
+            float glowIntensity = pow(normalizedMag, 3.0f);
+            
+            // We cap the max density at 160 to keep the core primarily black
+            uint8_t innerThreshold = (uint8_t)(glowIntensity * 160);
+            
+            if (noise < innerThreshold) {
+                display.drawPixel(x, y, GxEPD_RED);
+            } else {
+                display.drawPixel(x, y, GxEPD_BLACK);
+            }
+        } 
+        else if (i > 180) {
+            // INNER EDGE: Transition layer (Black/Red mix)
+            if (noise < 120) display.drawPixel(x, y, GxEPD_BLACK);
+            else display.drawPixel(x, y, GxEPD_RED);
+        }
+        else if (i > 100) {
+            // CORONA: Solid Red pop
+            display.drawPixel(x, y, GxEPD_RED);
+        }
+        else if (i > 45) {
+            // HALO: Smooth bridge to white background
+            float progress = (float)(i - 45) / (100 - 45); 
+            uint8_t ditherThreshold = (uint8_t)(progress * progress * 255);
+            if (noise < ditherThreshold) display.drawPixel(x, y, GxEPD_RED);
+        }
+      }
+      if (y % 15 == 0) yield();
+    }
+  } while (display.nextPage());
 }

@@ -221,7 +221,8 @@ void updateDisplay() {
     REFRESH_INTERVAL = 2; // every 1 minute during bus arrival display hours
   } else {
     // Night Mode / No Rain
-    displayJuliaSet();
+    //displayJuliaSet();
+    displayMandelbrot();
     REFRESH_INTERVAL = 10; // Wake up much less often (every 30 mins) to save battery
   }
 
