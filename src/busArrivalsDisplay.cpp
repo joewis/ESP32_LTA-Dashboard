@@ -29,9 +29,9 @@ void displayDestinationHeader(JsonObject destination) {
   // Only increment yPos if we're not starting at the top
   if (yPos == 0) {
     yPos += u8g2Fonts.getFontAscent();
-  } else {
-    yPos += lineHeight; // Add space between sections
-  }
+  }// else {
+   // yPos += lineHeight; // Add space between sections
+  //}
   
 
   u8g2Fonts.setCursor(0, yPos);
@@ -279,23 +279,3 @@ void renderBusDisplayPaged() {
   } while (display.nextPage());
 }
 
-
-// void renderBusDisplayPaged() {
-//   // 1. Lock in the selection BEFORE entering the loop
-//   prepareDestinationsForDisplay();
-
-//   display.setFullWindow();
-//   display.firstPage();
-//   do {
-//     yPos = 0; // Reset Y for every page slice
-//     display.fillScreen(GxEPD_WHITE);
-
-//     // 2. Simply draw the "Playlist"
-//     for (int index : destinationsToDisplay) {
-//       displayBusPredictions(mergedDoc[index]);
-//     }
-
-
-//     Serial.println("Page rendered");
-//   } while (display.nextPage());
-// }
