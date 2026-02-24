@@ -295,9 +295,9 @@ static void handleBusDisplay() {
   fetchAllBusStopArrivals();
   populateDestinationArrivals();
 
-  displayDestinations();
-  displayRandomDestination();
-  //renderBusDisplayPaged();
+  //displayDestinations();
+  //displayRandomDestination();
+  renderBusDisplayPaged();
 }
 
 void updateDisplay() {
@@ -323,10 +323,10 @@ void updateDisplay() {
   }
 
   // Common footer elements
-  displayTime();
-  displayPMI25();
+  //displayTime();
+  //displayPMI25();
 
-  display.display();
+  //display.display();
   display.hibernate();
 }
 

@@ -5,7 +5,7 @@
 
 // 1. Set the page height here. 
 // Changing HEIGHT to (HEIGHT / 4) saves ~22KB of RAM and fixes your crash!
-#define MAX_DISPLAY_BUFFER_HEIGHT (GxEPD2_420c_GDEY042Z98::HEIGHT)
+#define MAX_DISPLAY_BUFFER_HEIGHT (GxEPD2_420c_GDEY042Z98::HEIGHT /4)
 
 
 // 2. Create a Type Alias to keep things clean

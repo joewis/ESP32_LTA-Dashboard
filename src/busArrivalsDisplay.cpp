@@ -195,7 +195,7 @@ void displayBusPredictions(JsonObject destination) {
  }
 
 
-/*
+
  void prepareDestinationsForDisplay() {
   destinationsToDisplay.clear();
   displayedIndices.clear();
@@ -293,4 +293,3 @@ void renderBusDisplayPaged() {
 //     Serial.println("Page rendered");
 //   } while (display.nextPage());
 // }
-*/
