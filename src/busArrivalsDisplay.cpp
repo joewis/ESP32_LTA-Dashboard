@@ -23,12 +23,14 @@ extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
  */
 void displayDestinationHeader(JsonObject destination) {
   // Display destination header
-  //yPos = u8g2Fonts.getCursorY(); // Reference to the current Y position
   u8g2Fonts.setFont(u8g2_font_helvB18_tr);
   int lineHeight = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
   
-  if (u8g2Fonts.getCursorY() == 0) {
+  // Only increment yPos if we're not starting at the top
+  if (yPos == 0) {
     yPos += u8g2Fonts.getFontAscent();
+  } else {
+    yPos += lineHeight; // Add space between sections
   }
   
 
@@ -256,7 +258,8 @@ void renderBusDisplayPaged() {
   display.firstPage();
   do {
     // 1. Reset state for EVERY page iteration
-    yPos = 0; 
+    int localYPos = 0; // Use local variable for paged updates to avoid global state modification
+    yPos = 0; // Also reset global for consistency
     //display.setCursor(0, 0); // Reset cursor to top-left for every page
     display.fillScreen(GxEPD_WHITE);
     
@@ -267,7 +270,10 @@ void renderBusDisplayPaged() {
 
     // 3. Draw the list
     for (int index : destinationsToDisplay) {
+      // Temporarily assign global yPos to local for this page rendering
+      yPos = localYPos;
       displayBusPredictions(mergedDoc[index]);
+      localYPos = yPos; // Update localYPos after drawing
     }
 
   } while (display.nextPage());
