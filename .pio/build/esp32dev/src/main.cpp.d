@@ -289,4 +289,5 @@
  .pio/libdeps/esp32dev/PNGdec/src/zconf.h \
  .pio/libdeps/esp32dev/PNGdec/src/inftrees.h \
  .pio/libdeps/esp32dev/PNGdec/src/inflate.h src/DisplayInstance.h \
- src/busArrivalsService.h src/busArrivalsDisplay.h src/blue_noise.h
+ src/busArrivalsService.h src/busArrivalsDisplay.h src/displayUtils.h \
+ src/blue_noise.h

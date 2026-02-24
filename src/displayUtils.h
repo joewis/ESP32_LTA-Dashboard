@@ -8,10 +8,10 @@
 
 // External declarations needed by the display utility functions
 extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
-extern String prettydate;
+//extern String prettydate;
 
 // Function declarations
-void displayTime();
+void displayTime(const String& timeString);
 void displayPMI25();
 
 #endif // DISPLAY_UTILS_H

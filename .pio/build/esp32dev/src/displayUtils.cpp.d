@@ -1,5 +1,5 @@
-.pio/build/esp32dev/src/busArrivalsDisplay.cpp.o: \
- src/busArrivalsDisplay.cpp \
+.pio/build/esp32dev/src/displayUtils.cpp.o: src/displayUtils.cpp \
+ src/displayUtils.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/freertos/FreeRTOS.h \
@@ -134,9 +134,6 @@
  /home/joerg/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/esp_hw_support/include/soc/esp32/spiram.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/io_pin_remap.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
- .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.h \
- .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.hpp \
- .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson/Configuration.hpp \
  .pio/libdeps/esp32dev/GxEPD2/src/GxEPD2_3C.h \
  .pio/libdeps/esp32dev/Adafruit\ GFX\ Library/Adafruit_GFX.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/Print.h \
@@ -181,8 +178,9 @@
  .pio/libdeps/esp32dev/GxEPD2/src/gdem3c/../GxEPD2_EPD.h \
  .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
  .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/u8g2_fonts.h \
- src/busArrivalsDisplay.h src/DisplayInstance.h src/busArrivalsService.h \
- src/displayUtils.h src/configManager.h \
+ src/configManager.h .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.h \
+ .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.hpp \
+ .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson/Configuration.hpp \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src/HTTPClient.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/Client.h \
@@ -284,4 +282,5 @@
  /home/joerg/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/hal/include/hal/aes_types.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/mbedtls/mbedtls/include/mbedtls/error.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
- /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h
+ /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h \
+ src/DisplayInstance.h
