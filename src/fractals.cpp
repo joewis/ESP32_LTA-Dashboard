@@ -80,9 +80,54 @@ void displayMandelbrot() {
     int h = display.height();
 
     // Randomize position and zoom for different fractal views
-    float centerX = (float)random(-200, 200) / 100.0f; // Random center X (-2.0 to 2.0)
-    float centerY = (float)random(-100, 100) / 100.0f; // Random center Y (-1.0 to 1.0)
-    float scale = (float)random(50, 300) / 100.0f; // Random zoom level (0.5 to 3.0)
+    // Instead of completely random values, we'll use ranges that ensure good coverage
+    float aspectRatio = (float)w / (float)h;
+    
+    // Choose from predefined interesting regions of the Mandelbrot set
+    int regionChoice = random(0, 5);
+    float centerX, centerY, zoomFactor;
+    
+    switch(regionChoice) {
+        case 0: // Full view of the main set
+            centerX = -0.5f;
+            centerY = 0.0f;
+            zoomFactor = 2.5f; // This will make the main set fill the screen appropriately
+            break;
+        case 1: // Seahorse valley
+            centerX = -0.75f;
+            centerY = 0.1f;
+            zoomFactor = 100.0f;
+            break;
+        case 2: // Lightning
+            centerX = -1.775f;
+            centerY = 0.0f;
+            zoomFactor = 200.0f;
+            break;
+        case 3: // Mini-Mandelbrot
+            centerX = -1.25066f;
+            centerY = 0.02012f;
+            zoomFactor = 500.0f;
+            break;
+        case 4: // Spiral area
+            centerX = -0.16f;
+            centerY = 1.04f;
+            zoomFactor = 150.0f;
+            break;
+        default:
+            centerX = -0.5f;
+            centerY = 0.0f;
+            zoomFactor = 2.5f;
+            break;
+    }
+    
+    // Apply some randomization around the chosen region
+    float randOffsetX = (float)random(-50, 50) / 100.0f / zoomFactor;
+    float randOffsetY = (float)random(-50, 50) / 100.0f / zoomFactor;
+    float randZoomAdjust = (float)random(80, 120) / 100.0f; // 0.8 to 1.2 multiplier
+    
+    centerX += randOffsetX;
+    centerY += randOffsetY;
+    zoomFactor *= randZoomAdjust;
 
     display.setFullWindow();
     display.firstPage();
@@ -90,9 +135,9 @@ void displayMandelbrot() {
         display.fillScreen(GxEPD_WHITE);
 
         for (int y = 0; y < h; y++) {
-            float cIm = centerY + (y - h / 2.0f) / (scale * h / 4.0f);
+            float cIm = centerY + (y - h / 2.0f) / (zoomFactor * h / 4.0f);
             for (int x = 0; x < w; x++) {
-                float cRe = centerX + (x - w / 2.0f) / (scale * w / 4.0f);
+                float cRe = centerX + (x - w / 2.0f) / (zoomFactor * w / 4.0f * aspectRatio);
                 
                 float zRe = 0.0f;
                 float zIm = 0.0f;
