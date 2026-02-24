@@ -103,9 +103,6 @@ void initDisplay() {
   
 }
 
-
-
-
 // Initialize pins, serial and other on-device hardware
 static void initHardware() {
   pinMode(GREEN_LED, OUTPUT);
@@ -161,8 +158,6 @@ static bool connectWiFi() {
 }
 
 
-
-
 // Consolidated cleanup before sleep: disconnect WiFi, end Serial, power off display and SPIFFS
 static void cleanupBeforeSleep() {
   WiFi.disconnect(true);
@@ -205,9 +200,6 @@ static void handleBusDisplay() {
 
   fetchAllBusStopArrivals();
   populateDestinationArrivals();
-
-  //displayDestinations();
-  //displayRandomDestination();
   renderBusDisplayPaged();
 }
 
@@ -223,7 +215,7 @@ void updateDisplay() {
   // Decide which display to show. 
   if ((rainCover > 10 && (bootCount-1) % (2*REFRESH_INTERVAL) == 0)) { 
     displaySingaporeMapWithRadarOverlay();
-    REFRESH_INTERVAL = 2; // every 5 minutes during radar display hours
+    REFRESH_INTERVAL = 2; // every 2 minutes during radar display hours
   } else if((timestamp >= "06:00" && timestamp <= "20:00")){
     handleBusDisplay();
     REFRESH_INTERVAL = 2; // every 1 minute during bus arrival display hours
@@ -237,7 +229,6 @@ void updateDisplay() {
   //displayTime();
   //displayPMI25();
 
-  //display.display();
   display.hibernate();
 }
 
