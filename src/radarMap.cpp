@@ -212,7 +212,8 @@ int pngBlueNoiseCallback(PNGDRAW *pDraw) {
                 int curY = y_start + dy;
 
                 // Index into the 64x64 Blue Noise mask
-                uint8_t noise = blueNoise64[(curY % 64) * 64 + (curX % 64)];
+                //uint8_t noise = blueNoise64[(curY % 64) * 64 + (curX % 64)];
+                uint8_t noise = bluenoise256[(curY % 256) * 256 + (curX % 256)];
 
                 // Only draw if the individual pixel passes the noise test
                 if (noise <= drawThreshold) {// Remove "|| true" to enable noise filtering

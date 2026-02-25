@@ -216,14 +216,15 @@ void updateDisplay() {
   if ((rainCover > 10 && (bootCount-1) % (2*REFRESH_INTERVAL) == 0)) { 
     displaySingaporeMapWithRadarOverlay();
     REFRESH_INTERVAL = 2; // every 2 minutes during radar display hours
-  } else if((timestamp >= "06:00" && timestamp <= "20:00")){
+  } else if((timestamp >= "06:00" && timestamp <= "20:00") ){
     handleBusDisplay();
     REFRESH_INTERVAL = 2; // every 1 minute during bus arrival display hours
   } else {
     // Night Mode / No Rain
     //displayJuliaSet();
     displayMandelbrot();
-    REFRESH_INTERVAL = 10; // Wake up much less often (every 30 mins) to save battery
+    //displayGrayScaleMandelbrot();
+    REFRESH_INTERVAL = 20; // Wake up much less often (every 30 mins) to save battery
   }
 
   // Common footer elements
