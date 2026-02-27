@@ -3,6 +3,5 @@
 
 void displayJuliaSet();
 void displayMandelbrot();
-void displayGrayScaleMandelbrot();
 
 #endif // FRACTALS_H

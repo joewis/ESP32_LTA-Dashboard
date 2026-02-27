@@ -44,7 +44,7 @@ void displayJuliaSet() {
                     zRe = r2 - i2 + cRe;
                 }
 
-                uint8_t noise = pgm_read_byte(&blueNoise64[(y % 64) * 64 + (x % 64)]);
+                uint8_t noise = bluenoise256[(y % 256) * 256 + (x % 256)];
                 
                 if (i == 32) {
                     // --- THE FIX: Dither the Red interior ---
@@ -141,7 +141,6 @@ void displayMandelbrot() {
             zRe = r2 - i2 + cRe;
         }
 
-        //uint8_t noise = pgm_read_byte(&blueNoise64[(y % 64) * 64 + (x % 64)]);
         uint8_t noise = bluenoise256[(y % 256) * 256 + (x % 256)];
 
         // --- LAYERED COLORING LOGIC ---
@@ -188,56 +187,3 @@ void displayMandelbrot() {
 }
 
 
-void displayGrayScaleMandelbrot() {
-  const int maxIterations = 256; 
-  int w = display.width();
-  int h = display.height();
-  float aspectRatio = (float)w / (float)h;
-
-  // 1. Coordinates (Picking a guaranteed high-detail spot)
-  float centerX = -0.7453f; 
-  float centerY = 0.1127f;
-  float zoomFactor = 1650.0f;
-
-  //centerX += (float)random(-100, 100) / (zoomFactor * 5000.0f);
-  centerY += (float)random(-300, 300) / (zoomFactor * 5000.0f);
-
-  display.setFullWindow();
-  display.firstPage();
-  do {
-    display.fillScreen(GxEPD_WHITE);
-
-    for (int y = 0; y < h; y++) {
-      float cIm = centerY + (y - h / 2.0f) * (4.0f / (zoomFactor * h));
-      for (int x = 0; x < w; x++) {
-        float cRe = centerX + (x - w / 2.0f) * (4.0f / (zoomFactor * w)) * aspectRatio;
-        float zRe = 0.0f, zIm = 0.0f;
-        int i;
-
-        for (i = 0; i < maxIterations; i++) {
-            float r2 = zRe * zRe;
-            float i2 = zIm * zIm;
-            if (r2 + i2 > 16.0f) break;
-            zIm = 2.0f * zRe * zIm + cIm;
-            zRe = r2 - i2 + cRe;
-        }
-
-
-        //uint8_t noise = blueNoise64[(y % 64) * 64 + (x % 64)];
-        uint8_t noise = bluenoise256[(y % 256) * 256 + (x % 256)];
-        if(i == maxIterations) {
-            display.drawPixel(x, y, GxEPD_RED);
-
-         } else {
-             // Map iteration count to a dither threshold
-             //uint8_t ditherThreshold = (uint8_t)((float)i / maxIterations * 255);
-             if (noise < i) {
-                 display.drawPixel(x, y, GxEPD_BLACK);
-             }
-         }
-
-      }
-      
-    }
-  } while (display.nextPage());
-}
