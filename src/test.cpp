@@ -117,8 +117,9 @@ void drawBlueNoisePicker() {
     for (int y = 0; y < h; y++) {
         for (int x = 0; x < w; x++) {
             // Map X and Y to our 64x64 mask (tiling)
-            int maskIndex = (y % 64) * 64 + (x % 64);
-            uint8_t threshold = blueNoise64[maskIndex];
+            int maskIndex = (y % 256) * 256 + (x % 256);
+            //uint8_t threshold = bluenoise256[maskIndex];
+            uint8_t threshold = pgm_read_byte(&bluenoise256[maskIndex]);
 
             // Calculate target intensity (0-255)
             // Y-axis: 0 at top, 255 at bottom (Black)

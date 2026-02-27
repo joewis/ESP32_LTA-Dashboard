@@ -23,21 +23,24 @@ extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
  * Displays the header for a destination (name and line separator)
  */
 void displayDestinationHeader(JsonObject destination) {
-  // Display destination header
   u8g2Fonts.setFont(u8g2_font_helvB18_tr);
   int lineHeight = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
   
-  // Only increment yPos if we're not starting at the top
-  if (yPos == 0) {
-    yPos += u8g2Fonts.getFontAscent();
-  }// else {
-   // yPos += lineHeight; // Add space between sections
-  //}
-  
+  // if (yPos == 0) {
+  //   yPos += u8g2Fonts.getFontAscent();
+  // }  
 
-  u8g2Fonts.setCursor(0, yPos);
+  if(display.getCursorY() == 0) {
+    display.setCursor(0, u8g2Fonts.getFontAscent());
+  } else {
+    display.setCursor(0, display.getCursorY());
+  }
+
+
+  //u8g2Fonts.setCursor(0, yPos);
   u8g2Fonts.printf("%s", destination["destination_name"].as<const char*>());
-  display.drawLine(0, yPos - lineHeight, display.width(), yPos - lineHeight, GxEPD_BLACK);
+  //display.drawLine(0, yPos - lineHeight, display.width(), yPos - lineHeight, GxEPD_BLACK);
+  display.drawLine(0, display.getCursorY() - lineHeight, display.width(), display.getCursorY() - lineHeight, GxEPD_BLACK);
 }
 
 /**
@@ -55,8 +58,7 @@ void displayBusPredictions(JsonObject destination) {
   String predictionText;
 
   displayDestinationHeader(destination);
-  //int16_t yPos = u8g2Fonts.getCursorY(); // Reference to the current Y position
-
+  
   // Display all bus stops and services for this destination
   u8g2Fonts.setFont(u8g2_font_fub30_tr);
   u8g2Fonts.setFontMode(1);
