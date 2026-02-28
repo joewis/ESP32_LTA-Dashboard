@@ -26,21 +26,13 @@ void displayDestinationHeader(JsonObject destination) {
   u8g2Fonts.setFont(u8g2_font_helvB18_tr);
   int lineHeight = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
   
-  // if (yPos == 0) {
-  //   yPos += u8g2Fonts.getFontAscent();
-  // }  
-
-  if(display.getCursorY() == 0) {
-    display.setCursor(0, u8g2Fonts.getFontAscent());
-  } else {
-    display.setCursor(0, display.getCursorY());
-  }
-
-
-  //u8g2Fonts.setCursor(0, yPos);
+   if (yPos == 0) {
+     yPos += u8g2Fonts.getFontAscent();
+   }  
+  u8g2Fonts.setCursor(0, yPos);
   u8g2Fonts.printf("%s", destination["destination_name"].as<const char*>());
-  //display.drawLine(0, yPos - lineHeight, display.width(), yPos - lineHeight, GxEPD_BLACK);
-  display.drawLine(0, display.getCursorY() - lineHeight, display.width(), display.getCursorY() - lineHeight, GxEPD_BLACK);
+  display.drawLine(0, yPos - lineHeight, display.width(), yPos - lineHeight, GxEPD_BLACK);
+  
 }
 
 /**
