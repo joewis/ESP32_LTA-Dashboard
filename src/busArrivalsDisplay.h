@@ -18,7 +18,7 @@ extern String timestamp;
 extern String weekday;
 
 // Display state
-extern int yPos;
+//extern int yPos;
 extern std::vector<int> displayedIndices;
 //extern std::vector<int> destinationsToDisplay;  // Pre-determined destinations for paged display
 
@@ -30,5 +30,8 @@ void displayBusPredictions(JsonObject destination);
 void displayDestinations();
 void displayRandomDestination();
 void renderBusDisplayPaged();
+
+int8_t lineHeight();
+int16_t newLine();
 
 #endif // BUS_ARRIVALS_DISPLAY_H

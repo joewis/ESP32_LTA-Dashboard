@@ -1,4 +1,4 @@
-olikraus/U8g2_for_Adafruit_GFX
-bblanchon/ArduinoJson @ ^7.0.0
-bitbank2/PNGdec @ ^1.1.6
 zinggjm/GxEPD2 @ ^1.5.0
+bitbank2/PNGdec @ ^1.1.6
+bblanchon/ArduinoJson @ ^7.0.0
+olikraus/U8g2_for_Adafruit_GFX

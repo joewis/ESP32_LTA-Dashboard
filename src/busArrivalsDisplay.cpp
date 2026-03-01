@@ -7,8 +7,6 @@
 #include "busArrivalsService.h"
 #include "displayUtils.h"
 
-// Display state tracking
-int yPos = 0;
 std::vector<int> displayedIndices;
 std::vector<int> destinationsToDisplay;  // Pre-determined destinations for paged display
 
@@ -19,20 +17,24 @@ extern String timestamp;
 extern String weekday;
 extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
+int8_t lineHeight(){
+  return u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();  
+}
+
+int16_t newLine(){
+  u8g2Fonts.setCursor(0, u8g2Fonts.getCursorY() + lineHeight());
+  return u8g2Fonts.getCursorY();
+}
+
+
 /**
  * Displays the header for a destination (name and line separator)
  */
 void displayDestinationHeader(JsonObject destination) {
   u8g2Fonts.setFont(u8g2_font_helvB18_tr);
-  int lineHeight = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
-  
-   if (yPos == 0) {
-     yPos += u8g2Fonts.getFontAscent();
-   }  
-  u8g2Fonts.setCursor(0, yPos);
+  newLine();
   u8g2Fonts.printf("%s", destination["destination_name"].as<const char*>());
-  display.drawLine(0, yPos - lineHeight, display.width(), yPos - lineHeight, GxEPD_BLACK);
-  
+  display.drawLine(0, u8g2Fonts.getCursorY(), display.width(), u8g2Fonts.getCursorY(), GxEPD_BLACK);
 }
 
 /**
@@ -41,7 +43,6 @@ void displayDestinationHeader(JsonObject destination) {
  */
 void displayBusPredictions(JsonObject destination) {
   int textwidth;
-  int lineHeight;
   int spacing;
 
   String eta;
@@ -54,25 +55,26 @@ void displayBusPredictions(JsonObject destination) {
   // Display all bus stops and services for this destination
   u8g2Fonts.setFont(u8g2_font_fub30_tr);
   u8g2Fonts.setFontMode(1);
-  
-  lineHeight = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
   spacing = u8g2Fonts.getUTF8Width(" ") / 2;
-
-  yPos += lineHeight;
   
+  // Loop through bus stops
   for (JsonObject bus_stop : destination["bus_stops"].as<JsonArray>()) {
-    if (yPos > display.height()) break;
+    if (u8g2Fonts.getCursorY() > display.height()) break;
     
+    // Loop through services at this bus stop
     for (JsonObject service : bus_stop["Services"].as<JsonArray>()) {
-      if (yPos > display.height()) break;
+      if (u8g2Fonts.getCursorY() > display.height()) break;
       
+      // Only display if there are predictions available
       if (service["arrivals"].is<JsonObject>()) {
-        u8g2Fonts.setCursor(5, yPos);
+        newLine();
+        u8g2Fonts.setCursor(5, u8g2Fonts.getCursorY());
         u8g2Fonts.printf("%s:", service["ServiceNo"].as<const char*>());
         
         JsonArray predictions = service["arrivals"]["predictions"];
         int xPos = u8g2Fonts.getUTF8Width("555: ");
         
+        // Loop through predictions for this service
         for (JsonObject pred : predictions) {
           eta = pred["eta"].as<String>();
           load = pred["load"].as<String>();
@@ -90,7 +92,7 @@ void displayBusPredictions(JsonObject destination) {
                     
           if (type == "DD") {
             // Double-decker - black text on white background with a box
-            display.fillRect(xPos, yPos - lineHeight + spacing, textwidth, lineHeight - spacing / 2, GxEPD_BLACK);
+            display.fillRect(xPos, u8g2Fonts.getCursorY() - lineHeight() + spacing, textwidth, lineHeight() - spacing / 2, GxEPD_BLACK);
             u8g2Fonts.setForegroundColor(GxEPD_WHITE);
           }
           
@@ -99,13 +101,12 @@ void displayBusPredictions(JsonObject destination) {
             u8g2Fonts.setForegroundColor(GxEPD_RED);
           } 
 
-          u8g2Fonts.setCursor(xPos + spacing, yPos);
+          u8g2Fonts.setCursor(xPos + spacing, u8g2Fonts.getCursorY());
           u8g2Fonts.printf("%s", predictionText);
           xPos += textwidth;
           
           u8g2Fonts.setForegroundColor(GxEPD_BLACK);
         }
-        yPos += lineHeight;
       }
     }
   }
@@ -171,23 +172,22 @@ void renderBusDisplayPaged() {
   display.setFullWindow();
   display.firstPage();
   do {
-    // 1. Reset state for EVERY page iteration
-    int localYPos = 0; // Use local variable for paged updates to avoid global state modification
-    yPos = 0; // Also reset global for consistency
-    //display.setCursor(0, 0); // Reset cursor to top-left for every page
+
     display.fillScreen(GxEPD_WHITE);
-    
+
+    // 1. Reset cursor to top-left for this page
+    u8g2Fonts.setCursor(0, 0);
+    display.setCursor(0, 0);
+
     // 2. Re-apply font settings inside the loop
     u8g2Fonts.setFontMode(1);
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
     u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
 
+
     // 3. Draw the list
     for (int index : destinationsToDisplay) {
-      // Temporarily assign global yPos to local for this page rendering
-      yPos = localYPos;
       displayBusPredictions(mergedDoc[index]);
-      localYPos = yPos; // Update localYPos after drawing
     }
     
 
