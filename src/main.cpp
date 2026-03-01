@@ -86,6 +86,7 @@ bool initializeTimeInfo() {
   }
 
   Serial.println("Failed to get time from NTP after multiple attempts");
+  ESP.restart();
   timeInfoValid = false;
   return false;
 }
@@ -100,7 +101,6 @@ void initDisplay() {
   u8g2Fonts.setFont(u8g2_font_fub20_tr);
   u8g2Fonts.setFontMode(1);
   display.fillScreen(GxEPD_WHITE);
-  
 }
 
 // Initialize pins, serial and other on-device hardware
@@ -224,7 +224,7 @@ void updateDisplay() {
     //displayJuliaSet();
     displayMandelbrot();
     //displayGrayScaleMandelbrot();
-    REFRESH_INTERVAL = 20; // Wake up much less often (every 30 mins) to save battery
+    REFRESH_INTERVAL = 1; // Wake up much less often (every 30 mins) to save battery
   }
 
   // Common footer elements
@@ -232,6 +232,17 @@ void updateDisplay() {
   //displayPMI25();
 
   display.hibernate();
+}
+
+void goToSleep(){
+  Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
+
+  // Cleanup peripherals and connections before sleeping
+  cleanupBeforeSleep();
+
+  // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  esp_deep_sleep_start();
 }
 
 void setup() {
@@ -249,14 +260,16 @@ void setup() {
     }
   }
 
-  Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
+  //Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
 
-  // Cleanup peripherals and connections before sleeping
-  cleanupBeforeSleep();
+  goToSleep();
 
-  // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-  esp_deep_sleep_start();
+  // // Cleanup peripherals and connections before sleeping
+  // cleanupBeforeSleep();
+
+  // // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
+  // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  // esp_deep_sleep_start();
 }
 
 void loop() {}

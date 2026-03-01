@@ -117,17 +117,22 @@ void displayMandelbrot() {
 
   //centerX += (float)random(-100, 100) / (zoomFactor * 5000.0f);
   //centerY += (float)random(-100, 100) / (zoomFactor * 5000.0f);
-  zoomFactor += (float)random(-500, 500) / 100.0f; // Add some zoom variation for extra uniqueness
+  zoomFactor *= (float)random(0.1, 2); // Add up to ±50% random zoom for variety
 
   Serial.printf("Rendering %s at Zoom %.1f\n", spot.name, zoomFactor);
 
   display.setFullWindow();
   display.firstPage();
+  int currentPage = 0;
+
   do {
     display.fillScreen(GxEPD_WHITE);
 
-    for (int y = 0; y < h; y++) {
-      float cIm = centerY + (y - h / 2.0f) * (4.0f / (zoomFactor * h));
+    int pageYStart = display.pageHeight()  * currentPage;
+
+    //for (int y = 0; y < h; y++) {
+    for (int y = pageYStart; y < pageYStart + display.pageHeight() ; y++) {
+        float cIm = centerY + (y - h / 2.0f) * (4.0f / (zoomFactor * h));
       for (int x = 0; x < w; x++) {
         float cRe = centerX + (x - w / 2.0f) * (4.0f / (zoomFactor * w)) * aspectRatio;
         float zRe = 0.0f, zIm = 0.0f;
@@ -183,6 +188,7 @@ void displayMandelbrot() {
       }
       //if (y % 15 == 0) yield();
     }
+    currentPage++;
   } while (display.nextPage());
 }
 

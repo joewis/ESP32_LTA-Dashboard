@@ -174,16 +174,13 @@ void renderBusDisplayPaged() {
   do {
 
     display.fillScreen(GxEPD_WHITE);
-
-    // 1. Reset cursor to top-left for this page
-    u8g2Fonts.setCursor(0, 0);
-    display.setCursor(0, 0);
-
-    // 2. Re-apply font settings inside the loop
     u8g2Fonts.setFontMode(1);
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
     u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
 
+    // 1. Reset cursor to top-left for this page
+    u8g2Fonts.setCursor(0, 0);
+    display.setCursor(0, 0);
 
     // 3. Draw the list
     for (int index : destinationsToDisplay) {
