@@ -171,6 +171,93 @@ void displayMandelbrot() {
             else display.drawPixel(x, y, GxEPD_RED);
         }
         else if (i > 100) {
+            // COROA: Solid Red pop
+            display.drawPixel(x, y, GxEPD_RED);
+        }
+        else if (i > 10) {
+            // HALO: Smooth bridge to white background
+            float progress = (float)(i - 45) / (100 - 45); 
+            uint8_t ditherThreshold = (uint8_t)(progress * progress * 255);
+            if (noise < ditherThreshold) display.drawPixel(x, y, GxEPD_RED);
+        }
+      }
+      //if (y % 15 == 0) yield();
+    }
+  } while (display.nextPage());
+}
+
+void displayOptimizedMandelbrot() {
+  const int maxIterations = 256; 
+  int w = display.width();
+  int h = display.height();
+  float aspectRatio = (float)w / (float)h;
+
+  int choice = random(0, 16);
+  MandelSpot spot = midgetLibrary[choice];
+
+  float centerX = spot.x;
+  float centerY = spot.y;
+  float zoomFactor = spot.z;
+
+  zoomFactor += (float)random(-500, 500) / 100.0f; // Add some zoom variation for extra uniqueness
+
+  Serial.printf("Rendering %s at Zoom %.1f\n", spot.name, zoomFactor);
+
+  display.setFullWindow();
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
+
+    // Get the current page's Y bounds
+    int pageYStart = display.page_y_start;
+    int pageYEnd = pageYStart + display.page_height;
+    
+    // Only calculate Mandelbrot for the current page's Y range
+    for (int y = pageYStart; y < pageYEnd && y < h; y++) {
+      float cIm = centerY + (y - h / 2.0f) * (4.0f / (zoomFactor * h));
+      for (int x = 0; x < w; x++) {
+        float cRe = centerX + (x - w / 2.0f) * (4.0f / (zoomFactor * w)) * aspectRatio;
+        float zRe = 0.0f, zIm = 0.0f;
+        int i;
+
+        for (i = 0; i < maxIterations; i++) {
+            float r2 = zRe * zRe;
+            float i2 = zIm * zIm;
+            if (r2 + i2 > 4.0f) break;
+            zIm = 2.0f * zRe * zIm + cIm;
+            zRe = r2 - i2 + cRe;
+        }
+
+        uint8_t noise = bluenoise256[(y % 256) * 256 + (x % 256)];
+
+        // --- LAYERED COLORING LOGIC ---
+        if (i == maxIterations) {
+            // THE CORE: Create a "Glow" from the boundary inward
+            float mag = sqrt(zRe * zRe + zIm * zIm);
+            
+            // Normalize mag (approx 0.0 to 2.0) to a 0.0-1.0 range
+            float normalizedMag = mag / 2.0f;
+            
+            // --- THE GLOW CURVE ---
+            // pow(x, 3.0) makes the red density drop off sharply as you move 
+            // away from the edge. Use 2.0 for a softer, deeper glow.
+            float glowIntensity = pow(normalizedMag, 0.8f);
+            
+            // We cap the max density at 160 to keep the core primarily black
+            uint8_t innerThreshold = (uint8_t)(glowIntensity * 160);
+            
+            if (noise < innerThreshold) {
+                display.drawPixel(x, y, GxEPD_RED);
+            } else {
+                display.drawPixel(x, y, GxEPD_BLACK);
+            }
+        } 
+        else if (i > 180) {
+            // INNER EDGE: Transition layer (Black/Red mix)
+            if (noise < 120) display.drawPixel(x, y, GxEPD_BLACK);
+            else display.drawPixel(x, y, GxEPD_RED);
+        }
+        else if (i > 100) {
             // CORONA: Solid Red pop
             display.drawPixel(x, y, GxEPD_RED);
         }

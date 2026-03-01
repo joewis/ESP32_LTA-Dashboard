@@ -3,5 +3,6 @@
 
 void displayJuliaSet();
 void displayMandelbrot();
+void displayOptimizedMandelbrot();
 
 #endif // FRACTALS_H
