@@ -117,7 +117,7 @@ void displayMandelbrot() {
 
   //centerX += (float)random(-100, 100) / (zoomFactor * 5000.0f);
   //centerY += (float)random(-100, 100) / (zoomFactor * 5000.0f);
-  zoomFactor *= (float)random(0.1, 2); // Add up to ±50% random zoom for variety
+  //zoomFactor *= (float)random(10, 20) / 10.0f; // Add up to ±50% random zoom for variety
 
   Serial.printf("Rendering %s at Zoom %.1f\n", spot.name, zoomFactor);
 

@@ -37,7 +37,7 @@ IPAddress primaryDNS(8, 8, 8, 8);   // Optional: Google DNS
 IPAddress secondaryDNS(8, 8, 4, 4); // Optional: Google DNS
 
 //NTP config
-const char* ntpServer = "pool.ntp.org";
+const char* ntpServer = "sg.pool.ntp.org";
 const long  gmtOffset_sec = 8 * 3600;
 const int   daylightOffset_sec = 0;
 
@@ -47,18 +47,16 @@ String prettydate = "";
 
 // Global time structure - fetched once via NTP
 struct tm globalTimeInfo;
-bool timeInfoValid = false;
 
 
 // Initialize time info once via NTP
-bool initializeTimeInfo() {
+void initializeTimeInfo() {
   const int MAX_ATTEMPTS = 5;
   int attempt = 0;
   unsigned long delayMs = 1000; // start with 1s backoff
 
   while (attempt < MAX_ATTEMPTS) {
     if (getLocalTime(&globalTimeInfo)) {
-      timeInfoValid = true;
 
       // Set global timestamp and weekday
       char timeBuf[10];
@@ -75,20 +73,18 @@ bool initializeTimeInfo() {
 
       Serial.printf("Time initialized: %s, %s\n", timestamp.c_str(), weekday.c_str());
       Serial.printf("Pretty Date: %s\n", prettydate.c_str());
-      return true;
+      return;
     }
-
-    attempt++;
-    Serial.printf("Failed to get time from NTP (attempt %d/%d). Retrying in %lu ms...\n", attempt, MAX_ATTEMPTS, delayMs);
-    delay(delayMs);
-    // exponential backoff but cap at 8s
-    delayMs = min(delayMs * 2, 8000UL);
+      attempt++;
+      Serial.printf("Failed to get time from NTP (attempt %d/%d). Retrying in %lu ms...\n", attempt, MAX_ATTEMPTS, delayMs);
+      delay(delayMs);
+      // exponential backoff but cap at 8s
+      delayMs = min(delayMs * 2, 8000UL);
+    
   }
 
   Serial.println("Failed to get time from NTP after multiple attempts");
   ESP.restart();
-  timeInfoValid = false;
-  return false;
 }
 
 void initDisplay() {
@@ -224,7 +220,7 @@ void updateDisplay() {
     //displayJuliaSet();
     displayMandelbrot();
     //displayGrayScaleMandelbrot();
-    REFRESH_INTERVAL = 1; // Wake up much less often (every 30 mins) to save battery
+    REFRESH_INTERVAL = 20; // Wake up much less often (every 10 mins) to save battery
   }
 
   // Common footer elements
@@ -260,16 +256,10 @@ void setup() {
     }
   }
 
-  //Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
-
   goToSleep();
 
-  // // Cleanup peripherals and connections before sleeping
-  // cleanupBeforeSleep();
 
-  // // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
-  // esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-  // esp_deep_sleep_start();
 }
 
 void loop() {}
+

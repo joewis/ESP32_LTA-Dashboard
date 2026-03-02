@@ -11,7 +11,6 @@ const char* ltaApiPath = "/ltaodataservice/v3/BusArrival";
 // Time-related globals (defined in main sketch)
 extern String timestamp;
 extern struct tm globalTimeInfo;
-extern bool timeInfoValid;
 
 // Global documents (defined in main sketch via configManager)
 extern JsonDocument configDoc;
@@ -80,7 +79,7 @@ void fetchAllBusStopArrivals() {
  * Uses the cached global time info for consistency
  */
 int calculateMinutesRemaining(String etaTime) {
-  if (etaTime == "" || etaTime == "null" || !timeInfoValid) return -1; // No ETA or invalid time
+  if (etaTime == "" || etaTime == "null" ) return -1; // No ETA or invalid time
   
   // Parse ETA time (format: "2024-02-20T15:30:00+08:00")
   int etaHour = etaTime.substring(11, 13).toInt();
