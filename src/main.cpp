@@ -37,7 +37,10 @@ IPAddress primaryDNS(8, 8, 8, 8);   // Optional: Google DNS
 IPAddress secondaryDNS(8, 8, 4, 4); // Optional: Google DNS
 
 //NTP config
-const char* ntpServer = "sg.pool.ntp.org";
+//const char* ntpServer = "sg.pool.ntp.org";
+const char* ntpServer1 = "sg.pool.ntp.org"; // Regional pool
+const char* ntpServer2 = "time.google.com";   // Google global
+const char* ntpServer3 = "time.cloudflare.com"; // Cloudflare global
 const long  gmtOffset_sec = 8 * 3600;
 const int   daylightOffset_sec = 0;
 
@@ -50,12 +53,13 @@ struct tm globalTimeInfo;
 
 
 // Initialize time info once via NTP
-void initializeTimeInfo() {
+static bool initializeTimeInfo() {
   const int MAX_ATTEMPTS = 5;
   int attempt = 0;
   unsigned long delayMs = 1000; // start with 1s backoff
 
   while (attempt < MAX_ATTEMPTS) {
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
     if (getLocalTime(&globalTimeInfo)) {
 
       // Set global timestamp and weekday
@@ -73,7 +77,7 @@ void initializeTimeInfo() {
 
       Serial.printf("Time initialized: %s, %s\n", timestamp.c_str(), weekday.c_str());
       Serial.printf("Pretty Date: %s\n", prettydate.c_str());
-      return;
+      return true;
     }
       attempt++;
       Serial.printf("Failed to get time from NTP (attempt %d/%d). Retrying in %lu ms...\n", attempt, MAX_ATTEMPTS, delayMs);
@@ -84,7 +88,7 @@ void initializeTimeInfo() {
   }
 
   Serial.println("Failed to get time from NTP after multiple attempts");
-  ESP.restart();
+  return false;
 }
 
 void initDisplay() {
@@ -144,8 +148,8 @@ static bool connectWiFi() {
 
     // Hardware reset after 60s to clear any radio stack hangs
     if (connectAttempts >= 60) {
-      Serial.println("\nWiFi failed. Restarting ESP32...");
-      ESP.restart();
+      Serial.println("\nWiFi connection failed after 60 attempts.");
+      return false; // Let the main loop handle the reset and retry logic
     }
   }
 
@@ -192,6 +196,7 @@ static void downloadRadarMap() {
 
 
 static void handleBusDisplay() {
+  fetched_github = loadConfigurationFiles();
   Serial.println("Displaying bus arrival times");
 
   fetchAllBusStopArrivals();
@@ -199,28 +204,28 @@ static void handleBusDisplay() {
   renderBusDisplayPaged();
 }
 
-void updateDisplay() {
+static void updateDisplay() {
   initDisplay(); 
   
   downloadRadarMap();
   int rainCover = getRainCoverPercentage();
 
   //print current bootcount modulo refresh interval and rain cover for debugging
-  Serial.printf("Boot Count: %d, Refresh Interval: %d, Rain Cover: %d%%\n", bootCount-1, 2*REFRESH_INTERVAL, rainCover);
+  Serial.printf("Boot Count: %d,  Rain Cover: %d%%\n", bootCount, rainCover);
 
   // Decide which display to show. 
-  if ((rainCover > 10 && (bootCount-1) % (2*REFRESH_INTERVAL) == 0)) { 
+  if ((rainCover > 10 && (bootCount % 4) == 0)) { 
+    precomputeHueTables();
     displaySingaporeMapWithRadarOverlay();
-    REFRESH_INTERVAL = 2; // every 2 minutes during radar display hours
+
   } else if((timestamp >= "06:00" && timestamp <= "20:00") ){
     handleBusDisplay();
-    REFRESH_INTERVAL = 2; // every 1 minute during bus arrival display hours
-  } else {
+
+  } else if (bootCount % 20 == 0) {
     // Night Mode / No Rain
     //displayJuliaSet();
     displayMandelbrot();
     //displayGrayScaleMandelbrot();
-    REFRESH_INTERVAL = 20; // Wake up much less often (every 10 mins) to save battery
   }
 
   // Common footer elements
@@ -230,7 +235,7 @@ void updateDisplay() {
   display.hibernate();
 }
 
-void goToSleep(){
+static void goToSleep(){
   Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
 
   // Cleanup peripherals and connections before sleeping
@@ -243,18 +248,15 @@ void goToSleep(){
 
 void setup() {
   initHardware();
+  bootCount++;
 
-  if (bootCount++ % REFRESH_INTERVAL == 0) {
     if (initSpiffs()) {
       if (connectWiFi()) {
-        configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-        initializeTimeInfo();
-        precomputeHueTables();
-        fetched_github = loadConfigurationFiles();
-        updateDisplay();
+        if(initializeTimeInfo()){
+          updateDisplay();
+        };
       }
     }
-  }
 
   goToSleep();
 
