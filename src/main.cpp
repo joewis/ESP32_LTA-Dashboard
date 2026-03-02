@@ -218,14 +218,12 @@ static void updateDisplay() {
     precomputeHueTables();
     displaySingaporeMapWithRadarOverlay();
 
-  } else if((timestamp >= "06:00" && timestamp <= "20:00") ){
+  } else if((timestamp >= "06:00" && timestamp <= "20:00") && (bootCount % 2 == 0)) {
     handleBusDisplay();
 
   } else if (bootCount % 20 == 0) {
-    // Night Mode / No Rain
     //displayJuliaSet();
     displayMandelbrot();
-    //displayGrayScaleMandelbrot();
   }
 
   // Common footer elements
