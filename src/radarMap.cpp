@@ -1,5 +1,6 @@
 #include "radarMap.h"
 #include "blue_noise.h"
+#include "displayUtils.h"
 
 // Global constant for the filename
 const char* DOWNLOADED_URL_FILE = "/downloaded.txt";
@@ -385,6 +386,9 @@ bool displaySingaporeMapWithRadarOverlay() {
       png.decode(localBuffer, 0); 
       png.close();
     }
+
+    displayBatteryLevel(); // Overlay battery level on top of the display
+
   } while (display.nextPage());
 
   free(localBuffer); // Free memory so other parts of the app can use it

@@ -51,6 +51,15 @@ String prettydate = "";
 // Global time structure - fetched once via NTP
 struct tm globalTimeInfo;
 
+// Define your pins based on your hardware layout
+#define EPD_SCL  18  // Your ESP32 SCK pin
+#define EPD_SDA  23  // Your ESP32 MOSI pin
+#define EPD_BUSY 25
+#define EPD_RES  26
+#define EPD_DC   27
+#define EPD_CS   5
+
+const int potPin=36; // GPIO36 (VP) for potentiometer value reading
 
 // Initialize time info once via NTP
 static bool initializeTimeInfo() {
@@ -230,12 +239,12 @@ static void updateDisplay() {
   //displayTime();
   //displayPMI25();
 
-  display.hibernate();
+  
 }
 
 static void goToSleep(){
   Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
-
+  display.hibernate();
   // Cleanup peripherals and connections before sleeping
   cleanupBeforeSleep();
 
@@ -245,9 +254,11 @@ static void goToSleep(){
 }
 
 void setup() {
+  pinMode(potPin, INPUT); // Configure GPIO 36 as input
+
   initHardware();
   bootCount++;
-
+  
     if (initSpiffs()) {
       if (connectWiFi()) {
         if(initializeTimeInfo()){
@@ -256,6 +267,7 @@ void setup() {
       }
     }
 
+    
   goToSleep();
 
 

@@ -187,6 +187,7 @@ void renderBusDisplayPaged() {
       displayBusPredictions(mergedDoc[index]);
     }
     
+    displayBatteryLevel(); // Overlay battery level on top of the display
 
   } while (display.nextPage());
 }

@@ -283,4 +283,9 @@
  .pio/libdeps/esp32dev/PNGdec/src/zconf.h \
  .pio/libdeps/esp32dev/PNGdec/src/inftrees.h \
  .pio/libdeps/esp32dev/PNGdec/src/inflate.h src/DisplayInstance.h \
- src/blue_noise.h
+ src/blue_noise.h src/displayUtils.h \
+ .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
+ .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/u8g2_fonts.h \
+ src/configManager.h .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.h \
+ .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.hpp \
+ .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson/Configuration.hpp

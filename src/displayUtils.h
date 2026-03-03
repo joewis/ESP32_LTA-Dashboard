@@ -13,5 +13,7 @@ extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 // Function declarations
 void displayTime(const String& timeString);
 void displayPMI25();
+float getBatteryLevel(int potPin);
+void displayBatteryLevel();
 
 #endif // DISPLAY_UTILS_H

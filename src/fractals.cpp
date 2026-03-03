@@ -2,6 +2,7 @@
 #include <GxEPD2_3C.h>
 #include "DisplayInstance.h"
 #include "blue_noise.h"
+#include "displayUtils.h"
 
 void displayJuliaSet() {
     uint8_t ditherTable[33];
@@ -188,6 +189,9 @@ void displayMandelbrot() {
       }
       //if (y % 15 == 0) yield();
     }
+
+    displayBatteryLevel(); // Overlay battery level on top of the fractal
+
     currentPage++;
   } while (display.nextPage());
 }
