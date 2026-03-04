@@ -1,5 +1,4 @@
-.pio/build/esp32dev/src/displayUtils.cpp.o: src/displayUtils.cpp \
- src/displayUtils.h \
+.pio/build/esp32dev/src/Utils.cpp.o: src/Utils.cpp src/Utils.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/Arduino.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/esp_arduino_version.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/freertos/include/freertos/FreeRTOS.h \
@@ -283,4 +282,4 @@
  /home/joerg/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/mbedtls/mbedtls/include/mbedtls/error.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/SPIFFS/src/SPIFFS.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/FS/src/FS.h \
- src/DisplayInstance.h
+ src/DisplayInstance.h lib/BatteryService/BatteryService.h

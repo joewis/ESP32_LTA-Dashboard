@@ -11,9 +11,10 @@
 #include "busArrivalsService.h"
 #include "busArrivalsDisplay.h"
 #include "DisplayInstance.h"
-#include "displayUtils.h"
+#include "Utils.h"
 #include "blue_noise.h"
 #include "fractals.h"
+#include "BatteryService.h"
 
 
 // Deep Sleep Configuration
@@ -21,11 +22,22 @@
 #define TIME_TO_SLEEP  30
 #define GREEN_LED 2
 
+// Define your pins based on your hardware layout
+#define EPD_SCL  18  // Your ESP32 SCK pin
+#define EPD_SDA  23  // Your ESP32 MOSI pin
+#define EPD_BUSY 25
+#define EPD_RES  26
+#define EPD_DC   27
+#define EPD_CS   5
+
+const int potPin=36; // GPIO36 (VP) for potentiometer value reading
+
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
 RTC_DATA_ATTR int bootCount = 0;
 RTC_DATA_ATTR int REFRESH_INTERVAL = 2;
 RTC_DATA_ATTR bool fetched_github = false;
+
 
 const char* ssid = WIFI_SSID;
 const char* password = WIFI_PASSWORD;    
@@ -35,6 +47,40 @@ IPAddress gateway(192, 168, 18, 1);  // Usually your router's IP
 IPAddress subnet(255, 255, 255, 0);
 IPAddress primaryDNS(8, 8, 8, 8);   // Optional: Google DNS
 IPAddress secondaryDNS(8, 8, 4, 4); // Optional: Google DNS
+
+// Connect to WiFi. Returns true when connected.
+static bool connectWiFi() {
+  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
+    Serial.println("STA Failed to configure Static IP");
+  }
+  WiFi.begin(ssid, password);
+  WiFi.setTxPower(WIFI_POWER_19_5dBm);
+
+  Serial.print("Connecting to WiFi");
+
+  int connectAttempts = 0;
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.print(".");
+    connectAttempts++;
+
+    // Re-issue begin after 30s in case of silent handshake failure
+    if (connectAttempts == 30) {
+      Serial.println("\nRetrying WiFi.begin()...");
+      WiFi.begin(ssid, password);
+    }
+
+    // Hardware reset after 60s to clear any radio stack hangs
+    if (connectAttempts >= 60) {
+      Serial.println("\nWiFi connection failed after 60 attempts.");
+      return false; // Let the main loop handle the reset and retry logic
+    }
+  }
+
+  Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
+  return true;
+}
 
 //NTP config
 //const char* ntpServer = "sg.pool.ntp.org";
@@ -50,16 +96,6 @@ String prettydate = "";
 
 // Global time structure - fetched once via NTP
 struct tm globalTimeInfo;
-
-// Define your pins based on your hardware layout
-#define EPD_SCL  18  // Your ESP32 SCK pin
-#define EPD_SDA  23  // Your ESP32 MOSI pin
-#define EPD_BUSY 25
-#define EPD_RES  26
-#define EPD_DC   27
-#define EPD_CS   5
-
-const int potPin=36; // GPIO36 (VP) for potentiometer value reading
 
 // Initialize time info once via NTP
 static bool initializeTimeInfo() {
@@ -112,16 +148,7 @@ void initDisplay() {
   display.fillScreen(GxEPD_WHITE);
 }
 
-// Initialize pins, serial and other on-device hardware
-static void initHardware() {
-  pinMode(GREEN_LED, OUTPUT);
-  digitalWrite(GREEN_LED, LOW);
 
-  delay(1000);
-  digitalWrite(GREEN_LED, HIGH);
-  Serial.begin(115200);
-
-}
 
 // Initialize SPIFFS. Returns true on success.
 static bool initSpiffs() {
@@ -129,40 +156,6 @@ static bool initSpiffs() {
     Serial.println("SPIFFS initialization failed");
     return false;
   }
-  return true;
-}
-
-// Connect to WiFi. Returns true when connected.
-static bool connectWiFi() {
-  if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS)) {
-    Serial.println("STA Failed to configure Static IP");
-  }
-  WiFi.begin(ssid, password);
-  WiFi.setTxPower(WIFI_POWER_19_5dBm);
-
-  Serial.print("Connecting to WiFi");
-
-  int connectAttempts = 0;
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.print(".");
-    connectAttempts++;
-
-    // Re-issue begin after 30s in case of silent handshake failure
-    if (connectAttempts == 30) {
-      Serial.println("\nRetrying WiFi.begin()...");
-      WiFi.begin(ssid, password);
-    }
-
-    // Hardware reset after 60s to clear any radio stack hangs
-    if (connectAttempts >= 60) {
-      Serial.println("\nWiFi connection failed after 60 attempts.");
-      return false; // Let the main loop handle the reset and retry logic
-    }
-  }
-
-  Serial.println("\nConnected! IP: " + WiFi.localIP().toString());
   return true;
 }
 
@@ -179,6 +172,18 @@ static void cleanupBeforeSleep() {
   // Unmount SPIFFS if mounted
   SPIFFS.end();
 }
+
+static void goToSleep(){
+  Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
+  display.hibernate();
+  // Cleanup peripherals and connections before sleeping
+  cleanupBeforeSleep();
+
+  // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
+  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  esp_deep_sleep_start();
+}
+
 
 // Extracted helper: handle radar display path
 static void downloadRadarMap() {
@@ -230,7 +235,7 @@ static void updateDisplay() {
   } else if((timestamp >= "06:00" && timestamp <= "20:00") && (bootCount % 2 == 0)) {
     handleBusDisplay();
 
-  } else if (bootCount % 20 == 0) {
+  } else if (bootCount % 1 == 0) {
     //displayJuliaSet();
     displayMandelbrot();
   }
@@ -242,21 +247,23 @@ static void updateDisplay() {
   
 }
 
-static void goToSleep(){
-  Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
-  display.hibernate();
-  // Cleanup peripherals and connections before sleeping
-  cleanupBeforeSleep();
 
-  // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
-  esp_deep_sleep_start();
-}
+
+BatteryService battery;
 
 void setup() {
   pinMode(potPin, INPUT); // Configure GPIO 36 as input
 
-  initHardware();
+  pinMode(GREEN_LED, OUTPUT);
+  digitalWrite(GREEN_LED, LOW);
+
+  delay(1000);
+  digitalWrite(GREEN_LED, HIGH);
+  Serial.begin(115200);
+
+  battery.begin(potPin, 2.17f, 3300.0f);
+
+
   bootCount++;
   
     if (initSpiffs()) {

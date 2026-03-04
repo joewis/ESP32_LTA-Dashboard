@@ -5,7 +5,7 @@
 #include <U8g2_for_Adafruit_GFX.h>
 #include "busArrivalsDisplay.h"
 #include "busArrivalsService.h"
-#include "displayUtils.h"
+#include "Utils.h"
 
 std::vector<int> displayedIndices;
 std::vector<int> destinationsToDisplay;  // Pre-determined destinations for paged display

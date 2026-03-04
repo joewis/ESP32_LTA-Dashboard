@@ -289,5 +289,5 @@
  .pio/libdeps/esp32dev/PNGdec/src/zconf.h \
  .pio/libdeps/esp32dev/PNGdec/src/inftrees.h \
  .pio/libdeps/esp32dev/PNGdec/src/inflate.h src/DisplayInstance.h \
- src/busArrivalsService.h src/busArrivalsDisplay.h src/displayUtils.h \
- src/blue_noise.h src/fractals.h
+ src/busArrivalsService.h src/busArrivalsDisplay.h src/Utils.h \
+ src/blue_noise.h src/fractals.h lib/BatteryService/BatteryService.h

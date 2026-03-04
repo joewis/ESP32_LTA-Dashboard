@@ -10,8 +10,6 @@
 #include <PNGdec.h>
 #include "DisplayInstance.h"
 
-//extern GxEPD2_3C<GxEPD2_420c_GDEY042Z98, GxEPD2_420c_GDEY042Z98::HEIGHT > display;
-
 extern struct tm globalTimeInfo;
 extern bool timeInfoValid;
 

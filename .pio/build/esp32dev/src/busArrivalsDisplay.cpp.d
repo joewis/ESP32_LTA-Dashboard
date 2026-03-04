@@ -182,7 +182,7 @@
  .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
  .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/u8g2_fonts.h \
  src/busArrivalsDisplay.h src/DisplayInstance.h src/busArrivalsService.h \
- src/displayUtils.h src/configManager.h \
+ src/Utils.h src/configManager.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src/HTTPClient.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src/WiFiClient.h \
  /home/joerg/.platformio/packages/framework-arduinoespressif32/cores/esp32/Client.h \

@@ -132,8 +132,6 @@ int getEastPM25() {
     if (httpCode == HTTP_CODE_OK) {
         String payload = http.getString();
         
-        // DynamicJsonDocument or JsonDocument depending on your ArduinoJson version
-        // The response is medium-sized, 2048-3072 bytes is usually safe.
         JsonDocument doc; 
         DeserializationError error = deserializeJson(doc, payload);
 

@@ -2,7 +2,7 @@
 #include <GxEPD2_3C.h>
 #include "DisplayInstance.h"
 #include "blue_noise.h"
-#include "displayUtils.h"
+#include "Utils.h"
 
 void displayJuliaSet() {
     uint8_t ditherTable[33];
@@ -83,7 +83,7 @@ const MandelSpot midgetLibrary[16] = {
     {-0.5f, 0.0f, 2.2f, "The Big Picture"},
     {-0.7453f, 0.1127f, 650.0f, "Seahorse Valley"},
     {-0.1607f, 1.0375f, 1200.0f, "Triple Spiral"},
-    {0.2817f, 0.5318f, 500.0f, "Elephant Valley"},
+    {0.2817f, 0.5318f, 100.0f, "Elephant Valley"},
     {-1.2506f, 0.0201f, 1500.0f, "Mini Mandelbrot"},
     {-0.748f, 0.1f, 2000.0f, "The Seahorse Eye"},
     {-1.775f, 0.0f, 300.0f, "Lightning Bolt"},

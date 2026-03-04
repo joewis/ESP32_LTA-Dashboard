@@ -1,6 +1,6 @@
 #include "radarMap.h"
 #include "blue_noise.h"
-#include "displayUtils.h"
+#include "Utils.h"
 
 // Global constant for the filename
 const char* DOWNLOADED_URL_FILE = "/downloaded.txt";

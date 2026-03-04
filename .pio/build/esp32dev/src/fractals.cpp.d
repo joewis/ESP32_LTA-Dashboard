@@ -175,7 +175,7 @@
  .pio/libdeps/esp32dev/GxEPD2/src/epd3c/GxEPD2_1248c.h \
  .pio/libdeps/esp32dev/GxEPD2/src/gdem3c/GxEPD2_1330c_GDEM133Z91.h \
  .pio/libdeps/esp32dev/GxEPD2/src/gdem3c/../GxEPD2_EPD.h \
- src/DisplayInstance.h src/blue_noise.h src/displayUtils.h \
+ src/DisplayInstance.h src/blue_noise.h src/Utils.h \
  .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/U8g2_for_Adafruit_GFX.h \
  .pio/libdeps/esp32dev/U8g2_for_Adafruit_GFX/src/u8g2_fonts.h \
  src/configManager.h .pio/libdeps/esp32dev/ArduinoJson/src/ArduinoJson.h \
