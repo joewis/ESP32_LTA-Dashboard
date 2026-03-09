@@ -364,19 +364,16 @@ void saveDownloadedUrl(const String &url) {
 
 
 bool displaySingaporeMapWithRadarOverlay() {
-  Serial.println("Displaying radar map with overlay");
-  // Allocate buffer on the HEAP to free up 800 bytes of global DRAM
+  // Allocate a line buffer for PNG decoding. This is reused for both the map and radar layers.
+  // The size is based on the maximum expected width of the PNG. Adjust if you use wider images.
   uint16_t* localBuffer = (uint16_t*)malloc(400 * sizeof(uint16_t));
   if (!localBuffer) return false;
-  
-  Serial.printf("Map file (%s) %s\n", SINGAPORE_MAP_FILE, SPIFFS.exists(SINGAPORE_MAP_FILE) ? "EXISTS" : "NOT FOUND");
-  
+
   display.firstPage();
   
   do {
     // DRAW MAP
     if (png.open(SINGAPORE_MAP_FILE, myOpen, myClose, myRead, mySeek, pngDrawCallback) == PNG_SUCCESS) {
-      // Pass the localBuffer to the callback via the first argument
       png.decode(localBuffer, 0);
       png.close();
     }

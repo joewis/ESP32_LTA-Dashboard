@@ -1,4 +1,5 @@
 zinggjm/GxEPD2 @ ^1.5.0
-bblanchon/ArduinoJson @ ^7.0.0
-bitbank2/PNGdec @ ^1.1.6
 olikraus/U8g2_for_Adafruit_GFX
+bitbank2/PNGdec @ ^1.1.6
+arkhipenko/TaskScheduler
+bblanchon/ArduinoJson @ ^7.0.0

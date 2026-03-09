@@ -15,6 +15,7 @@
 #include "blue_noise.h"
 #include "fractals.h"
 #include "BatteryService.h"
+#include <TaskScheduler.h>
 
 
 // Deep Sleep Configuration
@@ -33,6 +34,14 @@
 const int potPin=36; // GPIO36 (VP) for potentiometer value reading
 
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
+
+Scheduler runner;
+// Callback Prototypes
+void radarCallback();
+void busCallback();
+void fractalCallback();
+
+BatteryService battery;
 
 RTC_DATA_ATTR int bootCount = 0;
 RTC_DATA_ATTR int REFRESH_INTERVAL = 2;
@@ -55,6 +64,8 @@ static bool connectWiFi() {
   }
   WiFi.begin(ssid, password);
   WiFi.setTxPower(WIFI_POWER_19_5dBm);
+  WiFi.setAutoReconnect(true);
+  WiFi.setSleep(false); // Disable WiFi sleep to maintain stable connection for API calls
 
   Serial.print("Connecting to WiFi");
 
@@ -146,6 +157,7 @@ void initDisplay() {
   u8g2Fonts.setFont(u8g2_font_fub20_tr);
   u8g2Fonts.setFontMode(1);
   display.fillScreen(GxEPD_WHITE);
+  display.epd2.selectFastFullUpdate(true);
 }
 
 
@@ -235,7 +247,7 @@ static void updateDisplay() {
   } else if((timestamp >= "06:00" && timestamp <= "20:00") && (bootCount % 2 == 0)) {
     handleBusDisplay();
 
-  } else if (bootCount % 1 == 0) {
+  } else if (bootCount % 10 == 0) {
     //displayJuliaSet();
     displayMandelbrot();
   }
@@ -243,35 +255,38 @@ static void updateDisplay() {
   // Common footer elements
   //displayTime();
   //displayPMI25();
-
   
 }
 
-
-
-BatteryService battery;
-
 void setup() {
-  pinMode(potPin, INPUT); // Configure GPIO 36 as input
 
+  // Initialize green LED pin for status indication
   pinMode(GREEN_LED, OUTPUT);
   digitalWrite(GREEN_LED, LOW);
-
   delay(1000);
   digitalWrite(GREEN_LED, HIGH);
+
   Serial.begin(115200);
 
+  pinMode(potPin, INPUT); // Configure GPIO 36 as battery voltage input
   battery.begin(potPin, 2.17f, 3300.0f);
+
+  initSpiffs();
+
+  initDisplay();
+
+  precomputeHueTables();
 
 
   bootCount++;
   
     if (initSpiffs()) {
       if (connectWiFi()) {
-        if(initializeTimeInfo()){
-          updateDisplay();
-        };
-      }
+
+          if(initializeTimeInfo()){
+            updateDisplay();
+          };
+        }
     }
 
     
@@ -280,5 +295,42 @@ void setup() {
 
 }
 
-void loop() {}
+
+
+void radarCallback() {
+  int rainCover = getRainCoverPercentage();
+  if (rainCover > 10) {
+    initDisplay();
+    displaySingaporeMapWithRadarOverlay();
+    display.hibernate(); // Put display to sleep after updating radar to save power
+  }
+}
+
+void busCallback() {
+  // Check time condition
+  if (timestamp >= "06:00" && timestamp <= "20:00") {
+    initDisplay();
+    handleBusDisplay();
+    display.hibernate(); // Put display to sleep after updating radar to save power
+  }
+}
+
+void fractalCallback() {
+  initDisplay();
+  displayMandelbrot();
+  display.hibernate(); // Put display to sleep after updating radar to save power
+}
+
+// Task(Interval, Iterations, Callback, Scheduler, Enable)
+Task tRadar(120000, TASK_FOREVER, &radarCallback, &runner, false);  // 2 mins
+Task tBus(60000, TASK_FOREVER, &busCallback, &runner, false);       // 1 min
+Task tFractal(300000, TASK_FOREVER, &fractalCallback, &runner, true); // 5 mins
+
+void loop() {
+  // wifiService.loop();
+  // //timeService.loop();
+  // initializeTimeInfo();
+  // runner.execute();
+  
+}
 
