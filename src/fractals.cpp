@@ -4,6 +4,8 @@
 #include "blue_noise.h"
 #include "Utils.h"
 
+extern String timestamp;
+
 void displayJuliaSet() {
     uint8_t ditherTable[33];
     for (int i = 0; i <= 32; i++) {
@@ -190,7 +192,7 @@ void displayMandelbrot() {
       if (y % 15 == 0) yield(); // Yield every 15 lines to keep WiFi responsive (adjust as needed)
     }
 
-    displayBatteryLevel(); // Overlay battery level on top of the fractal
+    displayBatteryLevel(timestamp); // Overlay battery level on top of the fractal
 
     currentPage++;
   } while (display.nextPage());

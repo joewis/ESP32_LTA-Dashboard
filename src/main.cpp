@@ -285,7 +285,7 @@ static void updateDisplay() {
         u8g2Fonts.setForegroundColor(GxEPD_BLACK);
         u8g2Fonts.setCursor(30, 80);
         u8g2Fonts.printf("%s", timestamp.c_str());
-        displayBatteryLevel();
+        displayBatteryLevel(timestamp);
       } while (display.nextPage());
     }
 
@@ -337,7 +337,7 @@ static void showBatteryCritical() {
     u8g2Fonts.setCursor(30, 135);
     u8g2Fonts.printf("%d%%", battery.getPercentage());
 
-    displayBatteryLevel();
+    displayBatteryLevel(timestamp);
   } while (display.nextPage());
 
   batteryWarningShown = true;

@@ -2,6 +2,8 @@
 #include "DisplayInstance.h"
 #include <BatteryService.h>
 
+extern String timestamp;
+
 void displayTime(const String& timeString){
   u8g2Fonts.setForegroundColor(GxEPD_BLACK);
   u8g2Fonts.setFont(u8g2_font_helvB12_tr);
@@ -40,18 +42,25 @@ char getBatteryIcon(int percentage) {
     return '5';                            //5 bars (full)
 }
 
-void displayBatteryLevel() {
+void displayBatteryLevel(const String& timeStr) {
   int batteryLevel = battery.getPercentage();
   String batteryStr="";
+
+  // ─── Time before battery ───
+  if (timeStr.length() > 0) {
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_helvB12_tr);
+    int timeWidth = u8g2Fonts.getUTF8Width(timeStr.c_str());
+    int lineHeight = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
+    int yPos = lineHeight + u8g2Fonts.getFontDescent();
+    u8g2Fonts.setCursor(display.width() - timeWidth - 10, yPos);
+    u8g2Fonts.printf("%s", timeStr.c_str());
+  }
+
   if (battery.isCritical()) {
     u8g2Fonts.setForegroundColor(GxEPD_RED);
-    u8g2Fonts.setFont(u8g2_font_helvB12_tr);
-    batteryStr = "Battery Level Critical! : " + String(batteryLevel) + "%";
-    
   } else {
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
-    u8g2Fonts.setFont(u8g2_font_battery19_tn);
-    //batteryStr = "Battery: " + String(batteryLevel) + "%";
   }
 
   batteryStr = String(getBatteryIcon(batteryLevel));
