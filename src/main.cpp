@@ -364,7 +364,7 @@ void setup() {
 
   // ─── Battery check — gates everything else ───
   if (battery.isCritical()) {
-    if (!batteryWarningShown) {
+    if (!batteryWarningShown ) {
       showBatteryCritical();
     }
     // Critical: skip WiFi, skip display updates, just go back to sleep
