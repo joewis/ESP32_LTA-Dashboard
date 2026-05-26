@@ -45,6 +45,7 @@ RTC_DATA_ATTR bool timeWasSet = false;     // Did we ever sync time?
 RTC_DATA_ATTR int cachedHour = 0;
 RTC_DATA_ATTR int cachedMin = 0;
 RTC_DATA_ATTR int cachedWeekday = 0;       // 0=Sunday (tm_wday)
+RTC_DATA_ATTR bool batteryWarningShown = false;  // Battery warning rendered yet?
 
 
 const char* ssid = WIFI_SSID;
@@ -308,11 +309,47 @@ static bool cycleNeedsWiFi() {
 }
 
 
+// ─── Render battery critical screen (once, persists until charge) ───
+static void showBatteryCritical() {
+  if (batteryWarningShown) {
+    // Already displayed — just check if we recovered
+    return;
+  }
+
+  initDisplay();
+  display.setFullWindow();
+  display.firstPage();
+  do {
+    display.fillScreen(GxEPD_WHITE);
+
+    // Big battery icon / warning
+    u8g2Fonts.setFont(u8g2_font_fub30_tr);
+    u8g2Fonts.setForegroundColor(GxEPD_RED);
+    u8g2Fonts.setCursor(30, 60);
+    u8g2Fonts.printf("BATTERY CRITICAL");
+
+    u8g2Fonts.setFont(u8g2_font_helvB18_tr);
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setCursor(30, 100);
+    u8g2Fonts.printf("Please charge");
+
+    u8g2Fonts.setFont(u8g2_font_helvB12_tr);
+    u8g2Fonts.setCursor(30, 135);
+    u8g2Fonts.printf("%d%%", battery.getPercentage());
+
+    displayBatteryLevel();
+  } while (display.nextPage());
+
+  batteryWarningShown = true;
+  Serial.println("Battery critical — warning displayed");
+}
+
+
 void setup() {
   // Green LED status
   pinMode(GREEN_LED, OUTPUT);
   digitalWrite(GREEN_LED, LOW);
-  delay(1000);
+  delay(100);
   digitalWrite(GREEN_LED, HIGH);
 
   Serial.begin(115200);
@@ -324,6 +361,22 @@ void setup() {
 
   // Seed cached time (increments ~1 minute every 2 wake cycles)
   useCachedTime();
+
+  // ─── Battery check — gates everything else ───
+  if (battery.isCritical()) {
+    if (!batteryWarningShown) {
+      showBatteryCritical();
+    }
+    // Critical: skip WiFi, skip display updates, just go back to sleep
+    goToSleep();
+    return;  // never reached, but clear intent
+  }
+
+  // ─── Battery recovered — reset warning flag ───
+  if (batteryWarningShown && !battery.isCritical()) {
+    batteryWarningShown = false;
+    Serial.println("Battery recovered — resuming normal operation");
+  }
 
   // ─── Conditional WiFi ───
   bool needsWiFi = cycleNeedsWiFi();
