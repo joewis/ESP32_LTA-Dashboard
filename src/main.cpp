@@ -312,7 +312,6 @@ static bool cycleNeedsWiFi() {
 // ─── Render battery critical screen (once, persists until charge) ───
 static void showBatteryCritical() {
   if (batteryWarningShown) {
-    // Already displayed — just check if we recovered
     return;
   }
 
@@ -322,7 +321,6 @@ static void showBatteryCritical() {
   do {
     display.fillScreen(GxEPD_WHITE);
 
-    // Big battery icon / warning
     u8g2Fonts.setFont(u8g2_font_fub30_tr);
     u8g2Fonts.setForegroundColor(GxEPD_RED);
     u8g2Fonts.setCursor(30, 60);
@@ -337,7 +335,16 @@ static void showBatteryCritical() {
     u8g2Fonts.setCursor(30, 135);
     u8g2Fonts.printf("%d%%", battery.getPercentage());
 
-    displayBatteryLevel(timestamp);
+    // Static battery icon at top-right (no displayBatteryLevel call
+    // to avoid triggering voltage cutoff or drawing the time)
+    u8g2Fonts.setFont(u8g2_font_battery19_tn);
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFontMode(1);
+    String batStr = String(getBatteryIcon(battery.getPercentage()));
+    int batW = u8g2Fonts.getUTF8Width(batStr.c_str());
+    int lh = u8g2Fonts.getFontAscent() - u8g2Fonts.getFontDescent();
+    u8g2Fonts.setCursor(display.width() - batW, lh + u8g2Fonts.getFontDescent());
+    u8g2Fonts.printf("%s", batStr.c_str());
   } while (display.nextPage());
 
   batteryWarningShown = true;

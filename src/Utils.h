@@ -15,5 +15,6 @@ void displayTime(const String& timeString);
 void displayPMI25();
 float getBatteryLevel(int potPin);
 void displayBatteryLevel(const String& timeStr = "");
+char getBatteryIcon(int percentage);
 
 #endif // DISPLAY_UTILS_H
