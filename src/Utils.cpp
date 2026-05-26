@@ -59,8 +59,11 @@ void displayBatteryLevel(const String& timeStr) {
 
   if (battery.isCritical()) {
     u8g2Fonts.setForegroundColor(GxEPD_RED);
+    u8g2Fonts.setFont(u8g2_font_helvB12_tr);
+    batteryStr = "Battery Level Critical! : " + String(batteryLevel) + "%";
   } else {
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_battery19_tn);
   }
 
   batteryStr = String(getBatteryIcon(batteryLevel));
