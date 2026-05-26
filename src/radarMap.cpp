@@ -2,6 +2,8 @@
 #include "blue_noise.h"
 #include "Utils.h"
 
+extern String timestamp;
+
 // Global constant for the filename
 const char* DOWNLOADED_URL_FILE = "/downloaded.txt";
 const char* RADAR_IMAGE_FILE = "/radar.png";
@@ -386,7 +388,7 @@ bool displaySingaporeMapWithRadarOverlay() {
       png.close();
     }
 
-    displayBatteryLevel(); // Overlay battery level on top of the display
+    displayBatteryLevel(timestamp); // Overlay battery level on top of the display
 
     free(localBuffer); // Free memory so other parts of the app can use it
 

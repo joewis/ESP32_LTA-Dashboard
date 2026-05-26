@@ -181,7 +181,7 @@ void renderBusDisplay(){
       displayBusPredictions(mergedDoc[index]);
     }
     
-    displayBatteryLevel(); // Overlay battery level on top of the display
+    displayBatteryLevel(timestamp); // Overlay battery level on top of the display
 
 }
 
