@@ -34,12 +34,17 @@ const int potPin=36; // GPIO36 (VP) for potentiometer value reading
 
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
-
 BatteryService battery;
 
+// ─── RTC Memory: survives deep sleep ───
 RTC_DATA_ATTR int bootCount = 0;
 RTC_DATA_ATTR int REFRESH_INTERVAL = 2;
 RTC_DATA_ATTR bool fetched_github = false;
+RTC_DATA_ATTR bool hasRain = false;        // Cached rain state
+RTC_DATA_ATTR bool timeWasSet = false;     // Did we ever sync time?
+RTC_DATA_ATTR int cachedHour = 0;
+RTC_DATA_ATTR int cachedMin = 0;
+RTC_DATA_ATTR int cachedWeekday = 0;       // 0=Sunday (tm_wday)
 
 
 const char* ssid = WIFI_SSID;
@@ -79,7 +84,7 @@ static bool connectWiFi() {
     // Hardware reset after 60s to clear any radio stack hangs
     if (connectAttempts >= 60) {
       Serial.println("\nWiFi connection failed after 60 attempts.");
-      return false; // Let the main loop handle the reset and retry logic
+      return false;
     }
   }
 
@@ -88,7 +93,6 @@ static bool connectWiFi() {
 }
 
 //NTP config
-//const char* ntpServer = "sg.pool.ntp.org";
 const char* ntpServer1 = "sg.pool.ntp.org"; // Regional pool
 const char* ntpServer2 = "time.google.com";   // Google global
 const char* ntpServer3 = "time.cloudflare.com"; // Cloudflare global
@@ -106,13 +110,12 @@ struct tm globalTimeInfo;
 static bool initializeTimeInfo() {
   const int MAX_ATTEMPTS = 5;
   int attempt = 0;
-  unsigned long delayMs = 1000; // start with 1s backoff
+  unsigned long delayMs = 1000;
 
   while (attempt < MAX_ATTEMPTS) {
     configTime(gmtOffset_sec, daylightOffset_sec, ntpServer1, ntpServer2, ntpServer3);
     if (getLocalTime(&globalTimeInfo)) {
 
-      // Set global timestamp and weekday
       char timeBuf[10];
       strftime(timeBuf, sizeof(timeBuf), "%H:%M", &globalTimeInfo);
       timestamp = String(timeBuf);
@@ -125,16 +128,20 @@ static bool initializeTimeInfo() {
       strftime(dateBuf, sizeof(dateBuf), "%a %d %b %H:%M", &globalTimeInfo);
       prettydate = String(dateBuf);
 
+      // Cache into RTC memory
+      cachedHour = globalTimeInfo.tm_hour;
+      cachedMin = globalTimeInfo.tm_min;
+      cachedWeekday = globalTimeInfo.tm_wday;
+      timeWasSet = true;
+
       Serial.printf("Time initialized: %s, %s\n", timestamp.c_str(), weekday.c_str());
       Serial.printf("Pretty Date: %s\n", prettydate.c_str());
       return true;
     }
-      attempt++;
-      Serial.printf("Failed to get time from NTP (attempt %d/%d). Retrying in %lu ms...\n", attempt, MAX_ATTEMPTS, delayMs);
-      delay(delayMs);
-      // exponential backoff but cap at 8s
-      delayMs = min(delayMs * 2, 8000UL);
-    
+    attempt++;
+    Serial.printf("Failed to get time from NTP (attempt %d/%d). Retrying in %lu ms...\n", attempt, MAX_ATTEMPTS, delayMs);
+    delay(delayMs);
+    delayMs = min(delayMs * 2, 8000UL);
   }
 
   Serial.println("Failed to get time from NTP after multiple attempts");
@@ -154,8 +161,6 @@ void initDisplay() {
   display.epd2.selectFastFullUpdate(true);
 }
 
-
-
 // Initialize SPIFFS. Returns true on success.
 static bool initSpiffs() {
   if (!initSPIFFS()) {
@@ -170,30 +175,51 @@ static bool initSpiffs() {
 static void cleanupBeforeSleep() {
   WiFi.disconnect(true);
   WiFi.mode(WIFI_OFF);
-
   Serial.end();
   display.powerOff();
   display.end();
-
-  // Unmount SPIFFS if mounted
   SPIFFS.end();
 }
 
 static void goToSleep(){
   Serial.printf("Going to sleep for %d seconds...\n", TIME_TO_SLEEP);
   display.hibernate();
-  // Cleanup peripherals and connections before sleeping
   cleanupBeforeSleep();
-
-  // we startup every 30 seconds to prevent brownout but only refresh bus arrival times every 1 min to reduce battery drain
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   esp_deep_sleep_start();
 }
 
 
-// Extracted helper: handle radar display path
+// ─── Use cached time when WiFi was skipped ───
+static void useCachedTime() {
+  // Increment ~1 min per 2 wake cycles (30s * 2 = 60s)
+  cachedMin++;
+  if (cachedMin >= 60) {
+    cachedMin = 0;
+    cachedHour++;
+    if (cachedHour >= 24) {
+      cachedHour = 0;
+      cachedWeekday = (cachedWeekday + 1) % 7;
+    }
+  }
+
+  char buf[6];
+  snprintf(buf, sizeof(buf), "%02d:%02d", cachedHour, cachedMin);
+  timestamp = String(buf);
+
+  const char* days[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
+  weekday = String(days[cachedWeekday % 7]);
+
+  Serial.printf("Cached time: %s, %s\n", timestamp.c_str(), weekday.c_str());
+}
+
+// ─── Helpers ───
+static int currentHour() { return cachedHour; }
+static bool isDaytime()   { return cachedHour >= 6 && cachedHour < 20; }
+
+
+// ─── Radar ───
 static void downloadRadarMap() {
-  
   int delay_minutes = 10;
   bool downloaded = false;
 
@@ -202,60 +228,88 @@ static void downloadRadarMap() {
     downloaded = isUrlAlreadyDownloaded(radarUrl);
     if (!downloaded) {
       if (fetchRadarImage(radarUrl)) {
-        // 3. Mark URL as downloaded
         saveDownloadedUrl(radarUrl);
         downloaded = true;
       } else {
         delay_minutes += 5;
-        delay(1000); // be nice to the server
+        delay(1000);
       }
     }
   }
-
 }
 
 
+// ─── Bus display ───
 static void handleBusDisplay() {
   fetched_github = loadConfigurationFiles();
   Serial.println("Displaying bus arrival times");
-
   fetchAllBusStopArrivals();
   populateDestinationArrivals();
   renderBusDisplayPaged();
 }
 
+
+// ─── Main display decision ───
 static void updateDisplay() {
-  initDisplay(); 
-  
-  downloadRadarMap();
-  int rainCover = getRainCoverPercentage();
+  initDisplay();
 
-  //print current bootcount modulo refresh interval and rain cover for debugging
-  Serial.printf("Boot Count: %d,  Rain Cover: %d%%\n", bootCount, rainCover);
+  bool hadWiFi = (WiFi.status() == WL_CONNECTED);
 
-  // Decide which display to show. 
-  if ((rainCover > 10 && (bootCount % 4) == 0)) { 
+  // Rain check — only tries download if WiFi connected
+  int rainCover = 0;
+  if (hadWiFi && SPIFFS.exists("/radar.png")) {
+    downloadRadarMap();
+    rainCover = getRainCoverPercentage();
+    hasRain = (rainCover > 10);
+  }
+  rainCover = hasRain ? 60 : 0;  // Use cached rain state when offline
+
+  Serial.printf("Boot: %d, WiFi: %d, Rain: %d\n", bootCount, (int)hadWiFi, (int)hasRain);
+
+  // ─── Decision logic ───
+  if (hasRain && (bootCount % 4 == 0) && hadWiFi) {
     precomputeHueTables();
     displaySingaporeMapWithRadarOverlay();
 
-  } else if((timestamp >= "06:00" && timestamp <= "20:00") && (bootCount % 2 == 0) ) {
-    handleBusDisplay();
+  } else if (isDaytime() && (bootCount % 2 == 0)) {
+    if (hadWiFi) {
+      handleBusDisplay();
+    } else {
+      // Offline daytime fallback: just show time
+      display.setFullWindow();
+      display.firstPage();
+      do {
+        display.fillScreen(GxEPD_WHITE);
+        u8g2Fonts.setFont(u8g2_font_fub30_tr);
+        u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+        u8g2Fonts.setCursor(30, 80);
+        u8g2Fonts.printf("%s", timestamp.c_str());
+        displayBatteryLevel();
+      } while (display.nextPage());
+    }
 
-  } else if (bootCount % 10 == 0 ) {
-    //displayJuliaSet();
+  } else if (bootCount % 10 == 0) {
     displayMandelbrot();
-    //displayMandelbulb2();
   }
-
-  // Common footer elements
-  //displayTime();
-  //displayPMI25();
-  
+  // else: no display update this cycle
 }
 
-void setup() {
 
-  // Initialize green LED pin for status indication
+// ─── Determines if this wake cycle needs WiFi ───
+static bool cycleNeedsWiFi() {
+  if (isDaytime()) {
+    // Even boot cycles = bus display
+    if (bootCount % 2 == 0) return true;
+  }
+  // First boot without a time sync ever: try WiFi
+  if (!timeWasSet) return true;
+  // Nighttime: no WiFi needed
+  return false;
+}
+
+
+void setup() {
+  // Green LED status
   pinMode(GREEN_LED, OUTPUT);
   digitalWrite(GREEN_LED, LOW);
   delay(1000);
@@ -263,41 +317,41 @@ void setup() {
 
   Serial.begin(115200);
 
-  pinMode(potPin, INPUT); // Configure GPIO 36 as battery voltage input
+  pinMode(potPin, INPUT);
   battery.begin(potPin, 2.17f, 3300.0f);
 
-  initSpiffs();
+  bootCount++;
 
-  initDisplay();
+  // Seed cached time (increments ~1 minute every 2 wake cycles)
+  useCachedTime();
+
+  // ─── Conditional WiFi ───
+  bool needsWiFi = cycleNeedsWiFi();
+
+  if (needsWiFi) {
+    initSpiffs();
+    if (connectWiFi()) {
+      initializeTimeInfo();  // NTP sync — updates cached time
+    }
+  }
 
   precomputeHueTables();
 
+  // ─── Display decision ───
+  bool shouldDisplay = false;
+  if (isDaytime() && (bootCount % 2 == 0)) shouldDisplay = true;
+  if (bootCount % 10 == 0) shouldDisplay = true;
+  if (bootCount <= 3) shouldDisplay = true;  // Debug: always show first 3 boots
 
-  bootCount++;
-  
-    if (initSpiffs()) {
-      if (connectWiFi()) {
+  if (shouldDisplay) {
+    initDisplay();
+    updateDisplay();
+  }
 
-          if(initializeTimeInfo()){
-            updateDisplay();
-          };
-        }
-    }
-
-    
   goToSleep();
-
-
 }
-
-
 
 
 void loop() {
-  // wifiService.loop();
-  // //timeService.loop();
-  // initializeTimeInfo();
-  // runner.execute();
-  
+  // All work in setup() + deep sleep
 }
-
