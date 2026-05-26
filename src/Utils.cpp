@@ -81,7 +81,6 @@ void displayBatteryLevel(const String& timeStr) {
 
   float batteryVoltage = battery.getSmoothedVoltage();
   Serial.printf("Battery Voltage: %.2f V, Percentage: %d%%\n", batteryVoltage, batteryLevel);
-  if (batteryVoltage < 3.3f) {
-    esp_deep_sleep_start(); // Force deep sleep if battery is critically low to prevent battery damage
-  }
+  // Note: voltage cutoff removed — battery critical handling is now in main.cpp
+  // which uses BatteryService::isCritical() + RTC guard properly.
 }
