@@ -83,7 +83,7 @@ struct MandelSpot {
 };
 
 // 16 High-detail spots across the Mandelbrot Set
-const MandelSpot midgetLibrary[16] = {
+const MandelSpot midgetLibrary[17] = {
     {-0.5f, 0.0f, 2.2f, "The Big Picture"},
     {-0.7453f, 0.1127f, 650.0f, "Seahorse Valley"},
     {-0.1607f, 1.0375f, 1200.0f, "Triple Spiral"},
