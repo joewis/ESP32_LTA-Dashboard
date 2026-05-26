@@ -92,34 +92,42 @@ usb_cut_z = esp32_z;
 disp_recess_x = wall + tolerance + disp_off_x;
 disp_recess_y = wall + tolerance + disp_off_y;
 
-// Bezel dimensions (slightly larger than PCB)
-bezel_w = epd_pcb_w + tolerance * 2;
-bezel_h = epd_pcb_h + tolerance * 2;
+// Bezel dimensions (matching e-paper PCB outline, slightly larger)
+bezel_w = epd_pcb_w + tolerance * 2;  // 90.2mm
+bezel_h = epd_pcb_h + tolerance * 2;  // 92.2mm
 bezel_t = 2.0;            // bezel thickness
-bezel_frame_w = 3.0;      // frame width around display window
+
+// Display window centered in bezel
+b_win_w = disp_w;
+b_win_h = disp_h;
+b_win_x = (bezel_w - b_win_w) / 2;
+b_win_y = (bezel_h - b_win_h) / 2;
 
 echo(str("Bezel: ", bezel_w, " x ", bezel_h, " x ", bezel_t, " mm"));
+echo(str("  Display window at (", b_win_x, ", ", b_win_y, ") size ", b_win_w, "x", b_win_h));
+echo(str("  Frame width: L=", b_win_x, " R=", bezel_w - b_win_x - b_win_w, " T=", b_win_y, " B=", bezel_h - b_win_y - b_win_h));
 
 // ─── Modules ───
 
 module bezel() {
     difference() {
-        // Outer frame
+        // Outer frame (same outline as e-paper PCB)
         cube([bezel_w, bezel_h, bezel_t]);
         
-        // Display window cutout
-        translate([bezel_frame_w + disp_off_x, bezel_frame_w + disp_off_y, -0.1])
-            cube([disp_w, disp_h, bezel_t + 0.2]);
+        // Display window cutout (centered)
+        translate([b_win_x, b_win_y, -0.1])
+            cube([b_win_w, b_win_h, bezel_t + 0.2]);
         
-        // Screw holes (pass through for PCB)
+        // Screw clearance holes (matching PCB mounting holes)
+        // Screws go: bezel → PCB → into standoffs in box
         for (x = [hole_off_x, epd_pcb_w - hole_off_x]) {
             for (y = [hole_off_y_bot, epd_pcb_h - hole_off_y_top]) {
                 translate([x, bezel_h - y, -0.1])
-                    cylinder(d = hole_d, h = bezel_t + 0.3, $fn = 16);
+                    cylinder(d = hole_d + 0.2, h = bezel_t + 0.3, $fn = 16);
             }
         }
         
-        // Countersink for screw heads
+        // Countersink for screw heads (on front face of bezel)
         for (x = [hole_off_x, epd_pcb_w - hole_off_x]) {
             for (y = [hole_off_y_bot, epd_pcb_h - hole_off_y_top]) {
                 translate([x, bezel_h - y, bezel_t - 0.4])
@@ -128,12 +136,12 @@ module bezel() {
         }
     }
     
-    // Alignment pins (on bezel bottom, mate into box top)
-    pin_h = 4.0;  // pin height (protrudes below bezel)
+    // Alignment pins — protrude from bezel back, go through PCB holes, into box
+    pin_h = 6.0;  // mm — pin height (must clear PCB thickness + reach into box)
     for (x = [hole_off_x, epd_pcb_w - hole_off_x]) {
         for (y = [hole_off_y_bot, epd_pcb_h - hole_off_y_top]) {
-            translate([x, bezel_h - y, bezel_t - 0.1])
-                cylinder(d = pin_d - 0.2, h = pin_h + 0.2, $fn = 16);
+            translate([x, bezel_h - y, 0])
+                cylinder(d = pin_d - 0.2, h = pin_h, $fn = 16);
         }
     }
 }
