@@ -55,7 +55,7 @@ bool BatteryService::isLow() const
 
 bool BatteryService::isCritical() const
 {
-    return voltageToPercentage(_filteredVoltage) <= _criticalThreshold;
+    return voltageToPercentage(_filteredVoltage) <= _criticalThreshold; 
 }
 
 void BatteryService::setLowThreshold(int percent)

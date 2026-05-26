@@ -216,7 +216,7 @@ static void useCachedTime() {
 
 // ─── Helpers ───
 static int currentHour() { return cachedHour; }
-static bool isDaytime()   { return cachedHour >= 6 && cachedHour < 20; }
+static bool isDaytime()   { return cachedHour >= 5 && cachedHour < 21; }
 
 
 // ─── Radar ───
@@ -356,7 +356,7 @@ void setup() {
   // Green LED status
   pinMode(GREEN_LED, OUTPUT);
   digitalWrite(GREEN_LED, LOW);
-  delay(100);
+  delay(1000); // 1 full second to let caps refill and prevent brownout when starting WiFi or display operations
   digitalWrite(GREEN_LED, HIGH);
 
   Serial.begin(115200);
@@ -369,21 +369,22 @@ void setup() {
   // Seed cached time (increments ~1 minute every 2 wake cycles)
   useCachedTime();
 
+
   // ─── Battery check — gates everything else ───
   if (battery.isCritical()) {
-    if (!batteryWarningShown ) {
+    if (!batteryWarningShown) {
       showBatteryCritical();
     }
     // Critical: skip WiFi, skip display updates, just go back to sleep
     goToSleep();
     return;  // never reached, but clear intent
-  }
-
-  // ─── Battery recovered — reset warning flag ───
-  if (batteryWarningShown && !battery.isCritical()) {
+  } 
+  else {
     batteryWarningShown = false;
     Serial.println("Battery recovered — resuming normal operation");
   }
+
+
 
   // ─── Conditional WiFi ───
   bool needsWiFi = cycleNeedsWiFi();
@@ -394,8 +395,6 @@ void setup() {
       initializeTimeInfo();  // NTP sync — updates cached time
     }
   }
-
-  precomputeHueTables();
 
   // ─── Display decision ───
   bool shouldDisplay = false;
