@@ -166,13 +166,7 @@ void displayBusPredictions(JsonObject destination) {
   }
 }
 
-void renderBusDisplayPaged() {
-  prepareDestinationsForDisplay();
-
-  display.setFullWindow();
-  display.firstPage();
-  do {
-
+void renderBusDisplay(){
     display.fillScreen(GxEPD_WHITE);
     u8g2Fonts.setFontMode(1);
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
@@ -188,6 +182,17 @@ void renderBusDisplayPaged() {
     }
     
     displayBatteryLevel(); // Overlay battery level on top of the display
+
+}
+
+void renderBusDisplayPaged() {
+  prepareDestinationsForDisplay();
+
+  display.setFullWindow();
+  display.firstPage();
+  do {
+
+    renderBusDisplay(); // Render the current page content
 
   } while (display.nextPage());
 }

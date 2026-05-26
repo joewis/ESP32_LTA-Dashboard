@@ -364,14 +364,16 @@ void saveDownloadedUrl(const String &url) {
 
 
 bool displaySingaporeMapWithRadarOverlay() {
-  // Allocate a line buffer for PNG decoding. This is reused for both the map and radar layers.
-  // The size is based on the maximum expected width of the PNG. Adjust if you use wider images.
-  uint16_t* localBuffer = (uint16_t*)malloc(400 * sizeof(uint16_t));
-  if (!localBuffer) return false;
+  
 
   display.firstPage();
   
+  
   do {
+    // Allocate a line buffer for PNG decoding. This is reused for both the map and radar layers.
+    // The size is based on the maximum expected width of the PNG. Adjust if you use wider images.
+    uint16_t* localBuffer = (uint16_t*)malloc(400 * sizeof(uint16_t));
+    
     // DRAW MAP
     if (png.open(SINGAPORE_MAP_FILE, myOpen, myClose, myRead, mySeek, pngDrawCallback) == PNG_SUCCESS) {
       png.decode(localBuffer, 0);
@@ -386,8 +388,10 @@ bool displaySingaporeMapWithRadarOverlay() {
 
     displayBatteryLevel(); // Overlay battery level on top of the display
 
+    free(localBuffer); // Free memory so other parts of the app can use it
+
   } while (display.nextPage());
 
-  free(localBuffer); // Free memory so other parts of the app can use it
+  
   return true;
 }

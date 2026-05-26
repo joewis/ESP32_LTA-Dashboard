@@ -45,17 +45,19 @@ void displayBatteryLevel() {
   String batteryStr="";
   if (battery.isCritical()) {
     u8g2Fonts.setForegroundColor(GxEPD_RED);
-    //batteryStr = "Battery Level Critical! : " + String(batteryLevel) + "%";
+    u8g2Fonts.setFont(u8g2_font_helvB12_tr);
+    batteryStr = "Battery Level Critical! : " + String(batteryLevel) + "%";
     
   } else {
     u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_battery19_tn);
     //batteryStr = "Battery: " + String(batteryLevel) + "%";
   }
 
   batteryStr = String(getBatteryIcon(batteryLevel));
   //batteryStr = "012345";
   
-  u8g2Fonts.setFont(u8g2_font_battery19_tn);
+  
   
   //u8g2Fonts.setFont(u8g2_font_helvB12_tr);
   u8g2Fonts.setFontMode(1);
@@ -65,7 +67,9 @@ void displayBatteryLevel() {
   u8g2Fonts.setCursor(display.width() - textwidth, yPos);
   u8g2Fonts.printf("%s", batteryStr.c_str());
 
-  if (batteryLevel < 3.1) {
+  float batteryVoltage = battery.getSmoothedVoltage();
+  Serial.printf("Battery Voltage: %.2f V, Percentage: %d%%\n", batteryVoltage, batteryLevel);
+  if (batteryVoltage < 3.3f) {
     esp_deep_sleep_start(); // Force deep sleep if battery is critically low to prevent battery damage
   }
 }

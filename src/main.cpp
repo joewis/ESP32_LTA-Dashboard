@@ -15,7 +15,6 @@
 #include "blue_noise.h"
 #include "fractals.h"
 #include "BatteryService.h"
-#include <TaskScheduler.h>
 
 
 // Deep Sleep Configuration
@@ -35,11 +34,6 @@ const int potPin=36; // GPIO36 (VP) for potentiometer value reading
 
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
-Scheduler runner;
-// Callback Prototypes
-void radarCallback();
-void busCallback();
-void fractalCallback();
 
 BatteryService battery;
 
@@ -244,12 +238,13 @@ static void updateDisplay() {
     precomputeHueTables();
     displaySingaporeMapWithRadarOverlay();
 
-  } else if((timestamp >= "06:00" && timestamp <= "20:00") && (bootCount % 2 == 0)) {
+  } else if((timestamp >= "06:00" && timestamp <= "20:00") && (bootCount % 2 == 0) ) {
     handleBusDisplay();
 
-  } else if (bootCount % 10 == 0) {
+  } else if (bootCount % 10 == 0 ) {
     //displayJuliaSet();
     displayMandelbrot();
+    //displayMandelbulb2();
   }
 
   // Common footer elements
@@ -297,34 +292,6 @@ void setup() {
 
 
 
-void radarCallback() {
-  int rainCover = getRainCoverPercentage();
-  if (rainCover > 10) {
-    initDisplay();
-    displaySingaporeMapWithRadarOverlay();
-    display.hibernate(); // Put display to sleep after updating radar to save power
-  }
-}
-
-void busCallback() {
-  // Check time condition
-  if (timestamp >= "06:00" && timestamp <= "20:00") {
-    initDisplay();
-    handleBusDisplay();
-    display.hibernate(); // Put display to sleep after updating radar to save power
-  }
-}
-
-void fractalCallback() {
-  initDisplay();
-  displayMandelbrot();
-  display.hibernate(); // Put display to sleep after updating radar to save power
-}
-
-// Task(Interval, Iterations, Callback, Scheduler, Enable)
-Task tRadar(120000, TASK_FOREVER, &radarCallback, &runner, false);  // 2 mins
-Task tBus(60000, TASK_FOREVER, &busCallback, &runner, false);       // 1 min
-Task tFractal(300000, TASK_FOREVER, &fractalCallback, &runner, true); // 5 mins
 
 void loop() {
   // wifiService.loop();

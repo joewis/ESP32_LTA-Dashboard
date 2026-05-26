@@ -290,6 +290,4 @@
  .pio/libdeps/esp32dev/PNGdec/src/inftrees.h \
  .pio/libdeps/esp32dev/PNGdec/src/inflate.h src/DisplayInstance.h \
  src/busArrivalsService.h src/busArrivalsDisplay.h src/Utils.h \
- src/blue_noise.h src/fractals.h lib/BatteryService/BatteryService.h \
- .pio/libdeps/esp32dev/TaskScheduler/src/TaskScheduler.h \
- .pio/libdeps/esp32dev/TaskScheduler/src/TaskSchedulerDeclarations.h
+ src/blue_noise.h src/fractals.h lib/BatteryService/BatteryService.h
