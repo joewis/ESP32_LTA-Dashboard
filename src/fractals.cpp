@@ -1,10 +1,12 @@
 #include <Arduino.h>
 #include <GxEPD2_3C.h>
+#include <U8g2_for_Adafruit_GFX.h>
 #include "DisplayInstance.h"
 #include "blue_noise.h"
 #include "Utils.h"
 
 extern String timestamp;
+extern U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
 void displayJuliaSet() {
     uint8_t ditherTable[33];
@@ -97,7 +99,8 @@ const MandelSpot midgetLibrary[16] = {
     {-0.743f, 0.131f, 3500.0f, "Deep Forest"},
     {0.273f, 0.007f, 500.0f, "The Cusp"},
     {-0.1607f, 1.0375f, 2500.0f, "Quad-Spiral Zoom"},
-    {-1.94f, 0.0f, 1200.0f, "Antenna Tip"}
+    {-1.94f, 0.0f, 1200.0f, "Antenna Tip"},
+    {-0.1560f, 1.0325f, 1800.0f, "Kiko's Rose"}
 };
 
 void displayMandelbrot() {
@@ -111,7 +114,7 @@ void displayMandelbrot() {
   //float centerY = 0.1127f;
   //float zoomFactor = 650.0f;
 
-  int choice = random(0, 16);
+  int choice = random(0, 17);
   MandelSpot spot = midgetLibrary[choice];
 
   float centerX = spot.x;
@@ -193,6 +196,13 @@ void displayMandelbrot() {
     }
 
     displayBatteryLevel(timestamp); // Overlay battery level on top of the fractal
+
+    // Label: show zoom spot name at bottom-left
+    u8g2Fonts.setFont(u8g2_font_helvB08_tr);
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setFontMode(1);
+    u8g2Fonts.setCursor(5, display.height() - 8);
+    u8g2Fonts.printf("%s", spot.name);
 
     currentPage++;
   } while (display.nextPage());
