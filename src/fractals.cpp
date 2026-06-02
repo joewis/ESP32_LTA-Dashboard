@@ -82,25 +82,22 @@ struct MandelSpot {
     const char* name;
 };
 
-// 16 High-detail spots across the Mandelbrot Set
-const MandelSpot midgetLibrary[17] = {
+// 17 High-detail spots across the Mandelbrot Set
+const MandelSpot midgetLibrary[14] = {
     {-0.5f, 0.0f, 2.2f, "The Big Picture"},
     {-0.7453f, 0.1127f, 650.0f, "Seahorse Valley"},
     {-0.1607f, 1.0375f, 1200.0f, "Triple Spiral"},
-    {0.2817f, 0.5318f, 100.0f, "Elephant Valley"},
     {-1.2506f, 0.0201f, 1500.0f, "Mini Mandelbrot"},
     {-0.748f, 0.1f, 2000.0f, "The Seahorse Eye"},
     {-1.775f, 0.0f, 300.0f, "Lightning Bolt"},
     {-0.8115f, 0.2014f, 1800.0f, "Deep Spiral"},
-    {-0.1011f, 0.9563f, 500.0f, "Medusa Tentacles"},
-    {-1.476f, 0.0f, 4500.0f, "The Satellite"},
     {-0.374f, 0.659f, 1200.0f, "Starfish Branch"},
     {-1.2505f, 0.0471f, 800.0f, "Scepter Valley"},
     {-0.743f, 0.131f, 3500.0f, "Deep Forest"},
     {0.273f, 0.007f, 500.0f, "The Cusp"},
     {-0.1607f, 1.0375f, 2500.0f, "Quad-Spiral Zoom"},
     {-1.94f, 0.0f, 1200.0f, "Antenna Tip"},
-    {-0.1560f, 1.0325f, 1800.0f, "Kiko's Rose"}
+    {0.3642965219914913f, 0.5930767655372629f, 125000.0f, "Kiko's Rose"}
 };
 
 void displayMandelbrot() {
@@ -114,7 +111,8 @@ void displayMandelbrot() {
   //float centerY = 0.1127f;
   //float zoomFactor = 650.0f;
 
-  int choice = random(0, 17);
+  int choice = random(0, 14);
+  //choice = 13; // TEMP: Force a specific spot for testing
   MandelSpot spot = midgetLibrary[choice];
 
   float centerX = spot.x;

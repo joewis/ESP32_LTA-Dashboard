@@ -216,7 +216,7 @@ static void useCachedTime() {
 
 // ─── Helpers ───
 static int currentHour() { return cachedHour; }
-static bool isDaytime()   { return cachedHour >= 5 && cachedHour < 21; }
+static bool isDaytime()   { return cachedHour >= 5 && cachedHour < 20; }
 
 
 // ─── Radar ───
