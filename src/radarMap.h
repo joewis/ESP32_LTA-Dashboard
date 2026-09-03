@@ -14,7 +14,7 @@ extern struct tm globalTimeInfo;
 extern bool timeInfoValid;
 
 String getRadarUrl(int delay_minutes);
-bool fetchRadarImage(const String &url);
+bool fetchLatestRadarImage();
 bool isUrlAlreadyDownloaded(const String &url);
 void saveDownloadedUrl(const String &url);
 bool displaySingaporeMapWithRadarOverlay();

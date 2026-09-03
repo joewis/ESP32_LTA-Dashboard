@@ -221,21 +221,9 @@ static bool isDaytime()   { return cachedHour >= 5 && cachedHour < 20; }
 
 // ─── Radar ───
 static void downloadRadarMap() {
-  int delay_minutes = 10;
-  bool downloaded = false;
-
-  while (!downloaded) {
-    String radarUrl = getRadarUrl(delay_minutes);
-    downloaded = isUrlAlreadyDownloaded(radarUrl);
-    if (!downloaded) {
-      if (fetchRadarImage(radarUrl)) {
-        saveDownloadedUrl(radarUrl);
-        downloaded = true;
-      } else {
-        delay_minutes += 5;
-        delay(1000);
-      }
-    }
+  // Use the new API to fetch the latest radar image
+  if (!fetchLatestRadarImage()) {
+    Serial.println("Failed to fetch latest radar image from API");
   }
 }
 

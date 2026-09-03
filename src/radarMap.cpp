@@ -1,6 +1,7 @@
 #include "radarMap.h"
 #include "blue_noise.h"
 #include "Utils.h"
+#include <ArduinoJson.h>
 
 extern String timestamp;
 
@@ -8,6 +9,9 @@ extern String timestamp;
 const char* DOWNLOADED_URL_FILE = "/downloaded.txt";
 const char* RADAR_IMAGE_FILE = "/radar.png";
 const char* SINGAPORE_MAP_FILE = "/base-853-final.png";
+
+// New API endpoint
+const char* RADAR_API_URL = "https://api.data.gov.sg/v2/environment/weather-radar-images/70km";
 
 PNG png;
 
@@ -272,56 +276,117 @@ int getRainCoverPercentage() {
 }
 
 
-String getRadarUrl(int delay) {
-  // Create a copy of globalTimeInfo
-  struct tm targetTime = globalTimeInfo;
-  
-  // Set to nearest previous 5-minute interval
-  targetTime.tm_min = (targetTime.tm_min / 5) * 5;
-  targetTime.tm_sec = 0;  // Set seconds to 0 for consistency
-  
-  // Convert to time_t and subtract 15 minutes (15 * 60 seconds)
-  time_t t = mktime(&targetTime);
-  t -= (delay * 60);
-  
-  // Convert back to struct tm using localtime (works reliably on ESP32)
-  struct tm *adjustedTime = localtime(&t);
-  
-  // Format the timestamp
-  char ts[17];
-  snprintf(ts, sizeof(ts), "%04d%02d%02d%02d%02d0000",
-    adjustedTime->tm_year + 1900,
-    adjustedTime->tm_mon + 1,
-    adjustedTime->tm_mday,
-    adjustedTime->tm_hour,
-    adjustedTime->tm_min);
-
-  //return "https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_2026021416050000dBR.dpsri.png";
-  //return "https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_2026021416450000dBR.dpsri.png";
-  return String("https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_") + ts + "dBR.dpsri.png";
+String getRadarUrl(int delay_minutes) {
+  // This function is deprecated with the new API
+  // Kept for backward compatibility but returns empty string
+  Serial.println("getRadarUrl() is deprecated. Use fetchLatestRadarImage() instead.");
+  return "";
 }
 
-bool fetchRadarImage(const String &url) {
+bool fetchLatestRadarImage() {
   HTTPClient http;
-  http.begin(url);
+  http.begin(RADAR_API_URL);
+  
+  // Add API key header
+  #ifdef DATAGOVSG_API_KEY
+    http.addHeader("X-API-Key", DATAGOVSG_API_KEY);
+    Serial.println("Using data.gov.sg API key");
+  #else
+    Serial.println("WARNING: DATAGOVSG_API_KEY not defined. API request will likely fail.");
+  #endif
+  
   int r = http.GET();
-  if (r == HTTP_CODE_OK) {
-    size_t len = http.getSize();
-    WiFiClient *stream = http.getStreamPtr();
-
-    File f = SPIFFS.open(RADAR_IMAGE_FILE, FILE_WRITE);
-    while (len && stream->available()) {
-      uint8_t buf[128];
-      size_t sz = stream->readBytes(buf, sizeof(buf));
-      f.write(buf, sz);
-      len -= sz;
-    }
-    f.close();
+  if (r != HTTP_CODE_OK) {
+    Serial.print("Failed to fetch radar data from API (HTTP Code: ");
+    Serial.print(r);
+    Serial.println(")");
+    http.end();
+    return false;
+  }
+  
+  // Get response size
+  size_t len = http.getSize();
+  if (len == 0) {
+    Serial.println("Empty response from API");
+    http.end();
+    return false;
+  }
+  
+  WiFiClient *stream = http.getStreamPtr();
+  
+  // Allocate buffer for JSON response
+  // Typical response is small, around 200-300 bytes
+  const size_t JSON_BUFFER_SIZE = 512;
+  std::unique_ptr<char[]> jsonBuffer(new char[JSON_BUFFER_SIZE]);
+  
+  // Read JSON response
+  size_t bytesRead = stream->readBytes(jsonBuffer.get(), min(len, (size_t)JSON_BUFFER_SIZE - 1));
+  jsonBuffer[bytesRead] = '\0';
+  
+  // Parse JSON
+  StaticJsonDocument<512> doc;
+  DeserializationError error = deserializeJson(doc, jsonBuffer.get());
+  
+  if (error) {
+    Serial.print("JSON parsing failed: ");
+    Serial.println(error.c_str());
+    http.end();
+    return false;
+  }
+  
+  // Extract image URL from response
+  // Response format: {"data":{"items":[{"image_url":"..."}]}}
+  const char* imageUrl = doc["data"]["items"][0]["image_url"];
+  
+  if (!imageUrl) {
+    Serial.println("No image_url found in API response");
+    http.end();
+    return false;
+  }
+  
+  String radarImageUrl = String(imageUrl);
+  Serial.print("Got radar image URL: ");
+  Serial.println(radarImageUrl);
+  
+  // Check if we already have this URL downloaded
+  if (isUrlAlreadyDownloaded(radarImageUrl)) {
+    Serial.println("Radar image already downloaded");
     http.end();
     return true;
   }
+  
+  // Now fetch the actual image
+  HTTPClient httpImage;
+  httpImage.begin(radarImageUrl);
+  int imgResult = httpImage.GET();
+  
+  if (imgResult != HTTP_CODE_OK) {
+    Serial.println("Failed to fetch radar image");
+    httpImage.end();
+    http.end();
+    return false;
+  }
+  
+  size_t imgLen = httpImage.getSize();
+  WiFiClient *imgStream = httpImage.getStreamPtr();
+  
+  File f = SPIFFS.open(RADAR_IMAGE_FILE, FILE_WRITE);
+  while (imgLen && imgStream->available()) {
+    uint8_t buf[128];
+    size_t sz = imgStream->readBytes(buf, sizeof(buf));
+    f.write(buf, sz);
+    imgLen -= sz;
+  }
+  f.close();
+  
+  // Save the URL to track what we've downloaded
+  saveDownloadedUrl(radarImageUrl);
+  
+  httpImage.end();
   http.end();
-  return false;
+  
+  Serial.println("Radar image downloaded successfully");
+  return true;
 }
 
 bool isUrlAlreadyDownloaded(const String &url) {
