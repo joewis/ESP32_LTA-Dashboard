@@ -185,15 +185,35 @@ void renderBusDisplay(){
 
 }
 
+// Fast B/W-only differential update counter.
+// Differential (refresh_bw) updates run in ~1.5s but never fully clear the
+// panel, so ghosting accumulates and the red layer is left untouched. A full
+// refresh every FULL_REFRESH_EVERY fast updates clears ghosting and syncs the
+// red layer (load indicators, battery, etc.) to the current buffer.
+static const int FULL_REFRESH_EVERY = 10;
+static int fastUpdateCount = 0;
+
 void renderBusDisplayPaged() {
   prepareDestinationsForDisplay();
 
-  display.setFullWindow();
-  display.firstPage();
-  do {
-
-    renderBusDisplay(); // Render the current page content
-
-  } while (display.nextPage());
+  fastUpdateCount++;
+  if (fastUpdateCount >= FULL_REFRESH_EVERY) {
+    // Full 3-color refresh (~10.8s): clears accumulated ghosting and updates
+    // the red layer. Runs every FULL_REFRESH_EVERY fast updates.
+    fastUpdateCount = 0;
+    display.setFullWindow();
+    display.firstPage();
+    do {
+      renderBusDisplay(); // Render the current page content
+    } while (display.nextPage());
+  } else {
+    // Fast B/W-only differential update (~1.5s). The red layer is left at its
+    // last full-refresh state; only black/white content updates here.
+    display.setPartialWindow(0, 0, display.width(), display.height());
+    display.firstPage();
+    do {
+      renderBusDisplay(); // Render the current page content
+    } while (display.nextPageBW());
+  }
 }
 
