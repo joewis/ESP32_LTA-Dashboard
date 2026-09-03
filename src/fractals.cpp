@@ -82,8 +82,8 @@ struct MandelSpot {
     const char* name;
 };
 
-// 17 High-detail spots across the Mandelbrot Set
-const MandelSpot midgetLibrary[14] = {
+// 20 High-detail spots across the Mandelbrot Set - curated for visual interest
+const MandelSpot midgetLibrary[20] = {
     {-0.5f, 0.0f, 2.2f, "The Big Picture"},
     {-0.7453f, 0.1127f, 650.0f, "Seahorse Valley"},
     {-0.1607f, 1.0375f, 1200.0f, "Triple Spiral"},
@@ -97,7 +97,13 @@ const MandelSpot midgetLibrary[14] = {
     {0.273f, 0.007f, 500.0f, "The Cusp"},
     {-0.1607f, 1.0375f, 2500.0f, "Quad-Spiral Zoom"},
     {-1.94f, 0.0f, 1200.0f, "Antenna Tip"},
-    {0.3642965219914913f, 0.5930767655372629f, 125000.0f, "Kiko's Rose"}
+    {0.3642965219914913f, 0.5930767655372629f, 125000.0f, "Kiko's Rose"},
+    {-0.7436438870371587f, 0.1318259042053119f, 5000.0f, "Elephant Valley"},
+    {-1.31408f, 0.05748f, 2500.0f, "Double Scepter"},
+    {-0.1011f, 0.9563f, 800.0f, "Spiral Nebula"},
+    {-1.4011f, 0.0f, 600.0f, "Western Filament"},
+    {-0.5034f, 0.5603f, 1500.0f, "Northern Spiral"},
+    {-0.235125f, 0.827215f, 3000.0f, "Jewel Cluster"}
 };
 
 void displayMandelbrot() {
@@ -106,22 +112,23 @@ void displayMandelbrot() {
   int h = display.height();
   float aspectRatio = (float)w / (float)h;
 
-  // 1. Coordinates (Picking a guaranteed high-detail spot)
-  //float centerX = -0.7453f; 
-  //float centerY = 0.1127f;
-  //float zoomFactor = 650.0f;
-
-  int choice = random(0, 14);
-  //choice = 13; // TEMP: Force a specific spot for testing
+  // Pick a random high-detail spot from the library
+  int choice = random(0, 20);
   MandelSpot spot = midgetLibrary[choice];
 
   float centerX = spot.x;
   float centerY = spot.y;
   float zoomFactor = spot.z;
 
-  //centerX += (float)random(-100, 100) / (zoomFactor * 5000.0f);
-  //centerY += (float)random(-100, 100) / (zoomFactor * 5000.0f);
-  //zoomFactor *= (float)random(10, 20) / 10.0f; // Add up to ±50% random zoom for variety
+  // Add subtle randomization around the chosen spot for variety
+  // Keep perturbations small enough to stay in the interesting region
+  float perturbationScale = 1.0f / (zoomFactor * 200.0f);
+  centerX += (float)random(-50, 51) * perturbationScale;
+  centerY += (float)random(-50, 51) * perturbationScale;
+  
+  // Vary zoom slightly (±30%) for different perspectives
+  float zoomVariation = (float)random(70, 131) / 100.0f;
+  zoomFactor *= zoomVariation;
 
   Serial.printf("Rendering %s at Zoom %.1f\n", spot.name, zoomFactor);
 
