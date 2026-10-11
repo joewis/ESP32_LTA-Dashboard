@@ -40,3 +40,10 @@ Thumbs.db
 coverage/
 htmlcov/
 .coverage
+
+# Secrets — never commit (copy secret.ini.example to secret.ini instead)
+secret.ini
+
+# PlatformIO build tree. Committing this is how build flags — including the
+# values from secret.ini — ended up in .pio/build/*/idedata.json.
+.pio/
